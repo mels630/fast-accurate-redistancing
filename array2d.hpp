@@ -18,32 +18,32 @@ class Array2D
 
 protected:
   std::vector<T> data; // contains (m x n) = N elements of type T
-  const int m;          // number of elements in the y-direction
-  const int n;          // number of elements in the x-direction
-  const int N;          // total number of elements
-  const double dx;      // grid spacing in x
-  const double dy;      // grid spacing in y
-  explicit Array2D<T>(); // don't use empty constructor
+  int const m;          // number of elements in the y-direction
+  int const n;          // number of elements in the x-direction
+  int const N;          // total number of elements
+  double const dx;      // grid spacing in x
+  double const dy;      // grid spacing in y
 
-  inline int sub2ind(const int ii, const int jj) const;
+  inline int sub2ind(int const ii, int const jj) const;
   void transposeData();
-  void flipData(const int ii, const int jj);
+  void flipData(int const ii, int const jj);
 
-  void labelHexCC(const T value, const bool sign, const int idx, Array2D<int> &label) const;
-  void labelHexCCX(const int idx, const int val, std::vector<int> &changed);
-  void labelHexCCY(const int idx, const int val, std::vector<int> &changed);
+  void labelHexCC(T const value, const bool sign, int const idx, Array2D<int> &label) const;
+  void labelHexCCX(int const idx, int const val, std::vector<int> &changed);
+  void labelHexCCY(int const idx, int const val, std::vector<int> &changed);
 
 public: 
-  explicit Array2D<T>(const int nn);
-  explicit Array2D<T>(const int mm, const int nn);
-  explicit Array2D<T>(const T* indata, const int mm, const int nn);
-  explicit Array2D<T>(const int mm, const int nn, const double _dx, const double _dy);
-  explicit Array2D<T>(const T* indata, const int mm, const int nn, const double _dx, const double _dy);
-  explicit Array2D<T>(const Array2D<T> &Input, const int CopyFlag);
+  Array2D<T>() = delete; // don't use empty constructor
+  explicit Array2D<T>(int const nn);
+  Array2D<T>(int const mm, int const nn);
+  Array2D<T>(T* const indata, int const mm, int const nn);
+  Array2D<T>(int const mm, int const nn, double const _dx, double const _dy);
+  Array2D<T>(T* const indata, int const mm, int const nn, double const _dx, double const _dy);
+  Array2D<T>(const Array2D<T> &Input, int const CopyFlag);
   Array2D<T>(const Array2D<T> &Input); 
-  inline T get(const int idx) const;
-  inline T get(const int ii, const int jj) const;
-  inline bool onBndry(const int idx) const;
+  inline T get(int const idx) const;
+  inline T get(int const ii, int const jj) const;
+  inline bool onBndry(int const idx) const;
   inline int getm() const;
   inline int getn() const;
   inline int getN() const;
@@ -52,64 +52,64 @@ public:
   inline double lenx() const;
   inline double leny() const;
   inline int size() const;
-  inline void put(const T value, const int idx);
-  inline void put(const T value, const int ii, const int jj);
-  inline void putadd(const T value, const int idx);
-  inline void putadd(const T value, const int ii, const int jj);
+  inline void put(T const value, int const idx);
+  inline void put(T const value, int const ii, int const jj);
+  inline void putadd(T const value, int const idx);
+  inline void putadd(T const value, int const ii, int const jj);
   void copyData(const Array2D<T> &input);
-  inline std::vector<int> connectedComponent(const int idx, const double size);
-  std::vector<int> connectedComponent(const int idx, const double size, const int changeval);
-  std::vector<int> connectedComponentPM(const int idx, const double size);
+  inline std::vector<int> connectedComponent(int const idx, double const size);
+  std::vector<int> connectedComponent(int const idx, double const size, int const changeval);
+  std::vector<int> connectedComponentPM(int const idx, double const size);
   std::vector<int> boundaryOfCC(const std::vector<int> cc);
   int diff1Nbors(int val, int idx);
   int diff2Nbors(int val, int idx);
   inline T maxval() const;
   inline T minval() const;
   inline T minabsval() const;
-  inline void fillWithValue(const T value);
-  inline T fourNborMin(const int idx) const;
-  inline T fourNborMax(const int idx) const;
+  inline void fillWithValue(T const value);
+  inline T fourNborMin(int const idx) const;
+  inline T fourNborMax(int const idx) const;
   void dump() const;
   void dump(std::string filename) const;
-  void dumpbooleq(const T val) const;
-  void dumpboolgeq(const T val) const;
-  void dumpboolleq(const T val) const;
+  void dumpbooleq(T const val) const;
+  void dumpboolgeq(T const val) const;
+  void dumpboolleq(T const val) const;
   T* dataAddress();
   std::vector<T> returnData() const;
   T* returnDataArray() const;
   Array2D<T> duplicateArray2D() const;
-  inline double getX(const int idx) const;
-  inline double getY(const int idx) const;
-  inline int getXidx(const int idx) const;
-  inline int getYidx(const int idx) const;
-  inline int xp(const int idx) const;
-  inline int xm(const int idx) const;
-  inline int yp(const int idx) const;
-  inline int ym(const int idx) const;
-  inline T getxp(const int idx) const;
-  inline T getxm(const int idx) const;
-  inline T getyp(const int idx) const;
-  inline T getym(const int idx) const;
+  inline double getX(int const idx) const;
+  inline double getY(int const idx) const;
+  inline int getXidx(int const idx) const;
+  inline int getYidx(int const idx) const;
+  inline int xp(int const idx) const;
+  inline int xm(int const idx) const;
+  inline int yp(int const idx) const;
+  inline int ym(int const idx) const;
+  inline T getxp(int const idx) const;
+  inline T getxm(int const idx) const;
+  inline T getyp(int const idx) const;
+  inline T getym(int const idx) const;
 
-  inline int hexN2(const int idx, const int nbor) const;
-  inline int hexN(const int idx, const int nbor) const;
-  inline int hexNNP2(const int idx, const int nbor) const;
-  inline int hexNNP(const int idx, const int nbor) const;
-  Array2D<int> labelHex(const T value, const bool sign) const;
-  bool labelHexFromIdxX(const int idx);
-  bool labelHexFromIdxY(const int idx);
+  inline int hexN2(int const idx, int const nbor) const;
+  inline int hexN(int const idx, int const nbor) const;
+  inline int hexNNP2(int const idx, int const nbor) const;
+  inline int hexNNP(int const idx, int const nbor) const;
+  Array2D<int> labelHex(T const value, const bool sign) const;
+  bool labelHexFromIdxX(int const idx);
+  bool labelHexFromIdxY(int const idx);
 
-  int countVal(const T value) const;
+  int countVal(T const value) const;
   
   // algebraic operations
   inline T& operator[] ( int I );
-  inline const T& operator[] ( int I ) const;
+  inline T const& operator[] ( int I ) const;
   inline Array2D<T>& operator= ( const Array2D<T>& Vec );
-  inline Array2D<T>& operator*= ( const T Value );
-  inline Array2D<T>& operator/= ( const T Value );
+  inline Array2D<T>& operator*= ( T const Value );
+  inline Array2D<T>& operator/= ( T const Value );
   inline Array2D<T>& operator+= ( const Array2D<T> &Vec );
   inline Array2D<T>& operator-= ( const Array2D<T> &Vec );
-  inline void setAll( const T val );
+  inline void setAll( T const val );
   inline void addMultiple ( const Array2D<T>& Vec, T Factor );
   inline T dotProd ( const Array2D<T>& Vec ) const;
   inline T getNormSqr() const;
@@ -123,14 +123,14 @@ public:
 };
 
 template <typename T>
-inline int Array2D<T>::sub2ind(const int ii, const int jj) const
+inline int Array2D<T>::sub2ind(int const ii, int const jj) const
 {
   assert((ii+m*jj) < N);
   return(ii+m*jj);
 }
 
 template <typename T> 
-Array2D<T>::Array2D(const int nn) :
+Array2D<T>::Array2D(int const nn) :
   m(nn),
   n(nn),
   N(nn*nn),
@@ -146,7 +146,7 @@ Array2D<T>::Array2D(const int nn) :
 }
 
 template <typename T> 
-Array2D<T>::Array2D(const int mm, const int nn) :
+Array2D<T>::Array2D(int const mm, int const nn) :
   m(mm),
   n(nn),
   N(mm*nn),
@@ -162,7 +162,7 @@ Array2D<T>::Array2D(const int mm, const int nn) :
 }
 
 template <typename T>
-Array2D<T>::Array2D(const T* indata, const int mm, const int nn) :
+Array2D<T>::Array2D(T* const indata, int const mm, int const nn) :
   m(mm),
   n(nn),
   N(mm*nn),
@@ -180,7 +180,7 @@ Array2D<T>::Array2D(const T* indata, const int mm, const int nn) :
 }
 
 template <typename T> 
-Array2D<T>::Array2D(const int mm, const int nn, const double _dx, const double _dy) :
+Array2D<T>::Array2D(int const mm, int const nn, double const _dx, double const _dy) :
   m(mm),
   n(nn),
   N(mm*nn),
@@ -196,7 +196,7 @@ Array2D<T>::Array2D(const int mm, const int nn, const double _dx, const double _
 }
 
 template <typename T>
-Array2D<T>::Array2D(const T* indata, const int mm, const int nn, const double _dx, const double _dy) :
+Array2D<T>::Array2D(T* const indata, int const mm, int const nn, double const _dx, double const _dy) :
   m(mm),
   n(nn),
   N(mm*nn),
@@ -214,7 +214,7 @@ Array2D<T>::Array2D(const T* indata, const int mm, const int nn, const double _d
 }
 
 template <typename T>
-Array2D<T>::Array2D( const Array2D<T> &Input, const int CopyFlag) :
+Array2D<T>::Array2D( const Array2D<T> &Input, int const CopyFlag) :
   m(Input.m),
   n(Input.n),
   N(Input.N),
@@ -243,49 +243,49 @@ Array2D<T>::Array2D( const Array2D<T> &Input) :
 }
 
 template <typename T>
-inline int Array2D<T>::xp(const int idx) const
+inline int Array2D<T>::xp(int const idx) const
 {
   return((idx)<(N-m) ? (idx +m) : (idx+m-N));
 }
 
 template <typename T>
-inline int Array2D<T>::xm(const int idx) const
+inline int Array2D<T>::xm(int const idx) const
 {
   return((idx)>(m-1) ? (idx -m) : (idx-m+N));
 }
 
 template <typename T>
-inline int Array2D<T>::yp(const int idx) const
+inline int Array2D<T>::yp(int const idx) const
 {
   return( (idx%m)==(m-1) ? (idx-m+1) : (idx+1));
 }
 
 template <typename T>
-inline int Array2D<T>::ym(const int idx) const
+inline int Array2D<T>::ym(int const idx) const
 {
   return( (idx%m)==(0) ? (idx+m-1) : (idx-1));
 }
 
 template <typename T>
-inline T Array2D<T>::getxp(const int idx) const
+inline T Array2D<T>::getxp(int const idx) const
 {
   return(data[xp(idx)]);
 }
 
 template <typename T>
-inline T Array2D<T>::getxm(const int idx) const
+inline T Array2D<T>::getxm(int const idx) const
 {
   return(data[xm(idx)]);
 }
 
 template <typename T>
-inline T Array2D<T>::getyp(const int idx) const
+inline T Array2D<T>::getyp(int const idx) const
 {
   return(data[yp(idx)]);
 }
 
 template <typename T>
-inline T Array2D<T>::getym(const int idx) const
+inline T Array2D<T>::getym(int const idx) const
 {
   return(data[ym(idx)]);
 }
@@ -339,43 +339,43 @@ inline int Array2D<T>::size() const
 }
 
 template <typename T>
-inline T Array2D<T>::get(const int idx) const
+inline T Array2D<T>::get(int const idx) const
 {
   return(data[idx]);
 }
 
 template <typename T>
-inline T Array2D<T>::get(const int ii, const int jj) const
+inline T Array2D<T>::get(int const ii, int const jj) const
 {
   return(data[sub2ind(ii,jj)]);
 }
 
 template <typename T>
-inline bool Array2D<T>::onBndry(const int idx) const
+inline bool Array2D<T>::onBndry(int const idx) const
 { // assumes input Array2D is a sign array, e.g. \pm 1, 0 are only values contained
   return((abs(getxp(idx)-get(idx)) + abs(getxm(idx)-get(idx)) + abs(getyp(idx)-get(idx)) + abs(getym(idx)-get(idx))) > 0);
 }
 
 template <typename T>
-inline void Array2D<T>::put(const T value, const int idx)
+inline void Array2D<T>::put(T const value, int const idx)
 {
   data[idx] = value;
 }
 
 template <typename T>
-inline void Array2D<T>::put(const T value, const int ii, const int jj)
+inline void Array2D<T>::put(T const value, int const ii, int const jj)
 {
   data[sub2ind(ii,jj)] = value;
 }
 
 template <typename T>
-inline void Array2D<T>::putadd(const T value, const int idx)
+inline void Array2D<T>::putadd(T const value, int const idx)
 {
   data[idx] += value;
 }
 
 template <typename T>
-inline void Array2D<T>::putadd(const T value, const int ii, const int jj)
+inline void Array2D<T>::putadd(T const value, int const ii, int const jj)
 {
   data[sub2ind(ii,jj)] += value;
 }
@@ -390,14 +390,14 @@ void Array2D<T>::copyData(const Array2D<T> &input)
 }
 
 template <typename T>
-inline std::vector<int> Array2D<T>::connectedComponent(const int idx, const double size) 
+inline std::vector<int> Array2D<T>::connectedComponent(int const idx, double const size) 
 { // calls connectedComponent with changeval==-1
   return(connectedComponent(idx,size,-1));
 }
 
 
 template <typename T>
-std::vector<int> Array2D<T>::connectedComponent(const int idx, const double size, const int changeval) 
+std::vector<int> Array2D<T>::connectedComponent(int const idx, double const size, int const changeval) 
 { // returns a std::vector containing the index of all pixels in the connected component identified by q==q[idx] containing idx
   // Change values to changeval when touched to indicate they've been
   // checked; then change all the values back to the original
@@ -432,7 +432,7 @@ std::vector<int> Array2D<T>::connectedComponent(const int idx, const double size
 }
 
 template <typename T>
-std::vector<int> Array2D<T>::connectedComponentPM(const int idx, const double size) 
+std::vector<int> Array2D<T>::connectedComponentPM(int const idx, double const size) 
 { // returns a std::vector containing the index of all pixels in the connected component identified by q== \pm q[idx] containing idx
   // Change values to 0 when touched to indicate they've been
   // checked; then change all the values back to the original
@@ -538,20 +538,20 @@ inline T Array2D<T>::minabsval() const
 }
 
 template <typename T>
-inline void Array2D<T>::fillWithValue(const T value)
+inline void Array2D<T>::fillWithValue(T const value)
 {
   for(int ii=0; ii<N; ++ii)
     data[ii] = value;
 }
 
 template <typename T>
-inline T Array2D<T>::fourNborMin(const int idx) const
+inline T Array2D<T>::fourNborMin(int const idx) const
 {
   return(mymin(mymin(data[xp(idx)],data[xm(idx)]),mymin(data[yp(idx)],data[ym(idx)])));
 }
 
 template <typename T>
-inline T Array2D<T>::fourNborMax(const int idx) const
+inline T Array2D<T>::fourNborMax(int const idx) const
 {
   return(mymax(mymax(data[xp(idx)],data[xm(idx)]),mymax(data[yp(idx)],data[ym(idx)])));
 }
@@ -596,7 +596,7 @@ void Array2D<T>::dump(std::string filename) const
 }
 
 template <typename T>
-void Array2D<T>::dumpbooleq(const T val) const
+void Array2D<T>::dumpbooleq(T const val) const
 { // outputs 1 
   for(int ii=0; ii < m; ++ii)
   {
@@ -607,7 +607,7 @@ void Array2D<T>::dumpbooleq(const T val) const
 }
 
 template <typename T>
-void Array2D<T>::dumpboolgeq(const T val) const
+void Array2D<T>::dumpboolgeq(T const val) const
 {
   for(int ii=0; ii < m; ++ii)
   {
@@ -618,7 +618,7 @@ void Array2D<T>::dumpboolgeq(const T val) const
 }
 
 template <typename T>
-void Array2D<T>::dumpboolleq(const T val) const
+void Array2D<T>::dumpboolleq(T const val) const
 {
   for(int ii=0; ii < m; ++ii)
   {
@@ -685,7 +685,7 @@ void Array2D<T>::transposeData()
 }
 
 template <typename T>
-void Array2D<T>::flipData(const int ii, const int jj)
+void Array2D<T>::flipData(int const ii, int const jj)
 {
   T tmp = data[ii+n*jj];
   data[ii+n*jj] = data[jj+n*ii];
@@ -693,31 +693,31 @@ void Array2D<T>::flipData(const int ii, const int jj)
 }
 
 template <typename T>
-inline double Array2D<T>::getX(const int idx) const
+inline double Array2D<T>::getX(int const idx) const
 {
   return(static_cast<double>(getXidx(idx)) * dx);
 }
 
 template <typename T>
-inline double Array2D<T>::getY(const int idx) const
+inline double Array2D<T>::getY(int const idx) const
 {
   return(static_cast<double>(getYidx(idx)) * dy);
 }
 
 template <typename T>
-inline int Array2D<T>::getXidx(const int idx) const
+inline int Array2D<T>::getXidx(int const idx) const
 {
   return(idx/m);
 }
 
 template <typename T>
-inline int Array2D<T>::getYidx(const int idx) const
+inline int Array2D<T>::getYidx(int const idx) const
 {
   return(idx%m);
 }
 
 template <typename T>
-inline int Array2D<T>::hexN2(const int idx, const int nbor) const
+inline int Array2D<T>::hexN2(int const idx, int const nbor) const
 {
   assert((nbor>=1) && (nbor<=6));
   switch(nbor)
@@ -747,7 +747,7 @@ inline int Array2D<T>::hexN2(const int idx, const int nbor) const
 }
 
 template <typename T>
-inline int Array2D<T>::hexN(const int idx, const int nbor) const
+inline int Array2D<T>::hexN(int const idx, int const nbor) const
 {
   assert((nbor>=1) && (nbor<=6));
   switch(nbor)
@@ -789,7 +789,7 @@ inline int Array2D<T>::hexN(const int idx, const int nbor) const
 }
 
 template <typename T>
-inline int Array2D<T>::hexNNP2(const int idx, const int nbor) const
+inline int Array2D<T>::hexNNP2(int const idx, int const nbor) const
 {
   assert((nbor>=1) && (nbor<=6));
   // check boundary cases, if you would cross a periodic boundary, return idx instead
@@ -818,7 +818,7 @@ inline int Array2D<T>::hexNNP2(const int idx, const int nbor) const
 }
 
 template <typename T>
-inline int Array2D<T>::hexNNP(const int idx, const int nbor) const
+inline int Array2D<T>::hexNNP(int const idx, int const nbor) const
 {
   assert((nbor>=1) && (nbor<=6));
   // check boundary cases, if you would cross a periodic boundary, return idx instead
@@ -853,7 +853,7 @@ inline int Array2D<T>::hexNNP(const int idx, const int nbor) const
 }
 
 template <typename T>
-Array2D<int> Array2D<T>::labelHex(const T value, const bool sign) const
+Array2D<int> Array2D<T>::labelHex(T const value, const bool sign) const
 { // return labeling of the connected components of data>=value (if sign==true)
   // and data<value (if sign==false), with hexagonal connectivity
   Array2D<int> label(m,n);
@@ -872,7 +872,7 @@ Array2D<int> Array2D<T>::labelHex(const T value, const bool sign) const
 }
 
 template <typename T>
-void Array2D<T>::labelHexCC(const T value, const bool sign, const int idx, Array2D<int> &label) const
+void Array2D<T>::labelHexCC(T const value, const bool sign, int const idx, Array2D<int> &label) const
 { // recursively add pieces of this connected component
 
   std::stack<int> s;
@@ -896,10 +896,10 @@ void Array2D<T>::labelHexCC(const T value, const bool sign, const int idx, Array
 }
 
 template <typename T>
-bool Array2D<T>::labelHexFromIdxY(const int idx)
+bool Array2D<T>::labelHexFromIdxY(int const idx)
 { // Try to label from idx without crossing Y=0, and see if the component is "infinite" from top to bottom
   std::vector<int> changed;
-  const int val = data[idx];
+  int const val = data[idx];
 
   for(int ii=0; ii<n; ++ii)
   {
@@ -940,10 +940,10 @@ bool Array2D<T>::labelHexFromIdxY(const int idx)
 }
 
 template <typename T>
-bool Array2D<T>::labelHexFromIdxX(const int idx)
+bool Array2D<T>::labelHexFromIdxX(int const idx)
 { // Try to label from idx without crossing X=0, and see if the component is "infinite" from left to right
   std::vector<int> changed;
-  const int val = data[idx];
+  int const val = data[idx];
 
   //if(idx==0)
   //{
@@ -1000,7 +1000,7 @@ bool Array2D<T>::labelHexFromIdxX(const int idx)
 }
 
 template <typename T>
-void Array2D<T>::labelHexCCY(const int idx, const int val, std::vector<int> &changed)
+void Array2D<T>::labelHexCCY(int const idx, int const val, std::vector<int> &changed)
 { // recursively add pieces of this connected component
   std::stack<int> s;
   s.push(idx);
@@ -1035,7 +1035,7 @@ void Array2D<T>::labelHexCCY(const int idx, const int val, std::vector<int> &cha
 }
 
 template <typename T>
-void Array2D<T>::labelHexCCX(const int idx, const int val, std::vector<int> &changed)
+void Array2D<T>::labelHexCCX(int const idx, int const val, std::vector<int> &changed)
 { // recursively add pieces of this connected component
   std::stack<int> s;
   s.push(idx);
@@ -1094,7 +1094,7 @@ void Array2D<T>::labelHexCCX(const int idx, const int val, std::vector<int> &cha
 
 
 template <typename T>
-int Array2D<T>::countVal(const T value) const
+int Array2D<T>::countVal(T const value) const
 {
   int count = 0;
   for(int ii=0; ii<N; ++ii)
@@ -1110,7 +1110,7 @@ inline T& Array2D<T>::operator[] ( int I )
 }
 
 template <typename T>
-inline const T& Array2D<T>::operator[] ( int I ) const
+inline T const& Array2D<T>::operator[] ( int I ) const
 {
   return data[I];
 }
@@ -1125,7 +1125,7 @@ inline Array2D<T>& Array2D<T>::operator= ( const Array2D<T>& Vec )
 }
 
 template <typename T>
-inline Array2D<T>& Array2D<T>::operator*= ( const T Value )
+inline Array2D<T>& Array2D<T>::operator*= ( T const Value )
 {
   for ( int i = 0; i < N; ++i )
     data[i] *= Value;
@@ -1133,7 +1133,7 @@ inline Array2D<T>& Array2D<T>::operator*= ( const T Value )
 }
 
 template <typename T>
-inline Array2D<T>& Array2D<T>::operator/= ( const T Value )
+inline Array2D<T>& Array2D<T>::operator/= ( T const Value )
 {
   for ( int i = 0; i < N; ++i )
     data[i] /= Value;
@@ -1157,7 +1157,7 @@ inline Array2D<T>& Array2D<T>::operator-= ( const Array2D<T> &Vec )
 }
 
 template <typename T>
-inline void Array2D<T>::setAll( const T val )
+inline void Array2D<T>::setAll( T const val )
 {
   for ( int i = 0; i < N; ++i )
     data[i] = val;
