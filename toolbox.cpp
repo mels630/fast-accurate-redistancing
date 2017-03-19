@@ -95,7 +95,7 @@ void fillSign(Array2D<double> &u, const double nullval, const double newval)
   vector<int> ind;
   ind.reserve(u.getN());
 
-  for(int ii=0; ii<u.getN(); ++ii)
+  for(idx_t ii=0; ii<u.getN(); ++ii)
     if(fabs(u.get(ii)-nullval) > TOL)
       ind.push_back(ii);
 
@@ -144,7 +144,7 @@ vector< vector<int> > createLabelList(const Array2D<int> &q)
   int numlabel = q.maxval();
   vector< vector<int> > lval;
   lval.resize(numlabel);
-  for(int ii=0; ii < q.getN(); ++ii)
+  for(idx_t ii=0; ii < q.getN(); ++ii)
     if(q.get(ii) > 0)
       lval[q.get(ii)-1].push_back(ii); // check to see if reserve if
                                        // worthwhile here
@@ -448,7 +448,7 @@ double l2err(const Array2D<double> u, const Array2D<double> v)
     return(-1.0f);
   const double da = 1.0f / static_cast<double>(u.getN());
   double err = 0.0f;
-  for(int ii=0; ii<u.getN(); ++ii)
+  for(idx_t ii=0; ii<u.getN(); ++ii)
     err += (v.get(ii)-u.get(ii))*(v.get(ii)-u.get(ii));
   return(sqrt(err*da));
 }

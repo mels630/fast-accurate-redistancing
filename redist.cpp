@@ -140,9 +140,9 @@ double Redist::estimateUpdate(const int idx)
 void Redist::setInterfaceValues()
 { 
   Array2D<int> sgn(u.getm(),u.getn());
-  for(int ii=0; ii<sgn.getN(); ++ii)
+  for(idx_t ii=0; ii<sgn.getN(); ++ii)
     sgn[ii] = static_cast<int>(mysign(u[ii]));
-  for(int ii=0; ii<sgn.getN(); ++ii)
+  for(idx_t ii=0; ii<sgn.getN(); ++ii)
     if((abs(sgn.getxp(ii)-sgn[ii]) + abs(sgn.getxm(ii)-sgn[ii]) +
         abs(sgn.getyp(ii)-sgn[ii]) + abs(sgn.getym(ii)-sgn[ii]))>0)
       bnd.push_back(ii);
@@ -194,13 +194,13 @@ void Redist::setInterfaceValuesDO()
 
 void Redist::thresholdAwayFromInterface()
 {
-  for(int ii=0;ii<state.getN();++ii)
+  for(idx_t ii=0;ii<state.getN();++ii)
     state.put(false,ii);
   for(vector<int>::iterator it=bnd.begin(); it != bnd.end(); ++it)
   {
     state.put(true,*it); // true indicates value is fixed (false otherwise)
   }
-  for(int ii=0;ii<state.getN();++ii)
+  for(idx_t ii=0;ii<state.getN();++ii)
     if(!state.get(ii))
       u[ii] = mysign(u0[ii])*thres;
 }
