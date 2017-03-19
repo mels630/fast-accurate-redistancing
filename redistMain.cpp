@@ -21,18 +21,30 @@ int main(int argc, char **argv)
   // (abort on errors)
 
   // Assume square initially ... (?)
-  cout << "Enter dimension: ";
-  int d;
-  cin >> d;
-  cout << "Enter n: ";
-  int n;
-  cin >> n;
-  int width;
-  cout << "Enter width: ";
-  cin >> width;
-  int flag;
-  cout << "Enter flag: ";
-  cin >> flag;
+  int d, n, width, flag;
+  if(argc == 1) {
+    cout << "Enter dimension: ";
+    cin >> d;
+    cout << "Enter n: ";
+    cin >> n;
+    cout << "Enter width: ";
+    cin >> width;
+    cout << "Enter flag: ";
+    cin >> flag;
+  } else {
+    assert (argc > 4);
+    d = std::atoi(argv[1]);
+    n = std::atoi(argv[2]);
+    width = std::atoi(argv[3]);
+    flag = std::atoi(argv[4]);
+  }
+  
+  std::cout << "Settings:" << std::endl;
+  std::cout << "        d: " << d << std::endl;
+  std::cout << "        n: " << n << std::endl;
+  std::cout << "    width: " << width << std::endl;
+  std::cout << "     flag: " << flag << std::endl;
+      
   if(d == 2)
   {
     Array2D<double> u0 = makeCircle(n,.25,.5,.5);
