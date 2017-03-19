@@ -548,7 +548,7 @@ void Redist::bisect(const int idx, double (&guess)[2])
     guess[0] = xp[0]; guess[1] = xp[1];
     return;
   }
-  if(isnan(up/(up-um)))
+  if(std::isnan(up/(up-um)))
   {
     printf(" up = %.3e, um = %.3e. Setting um = -1.0f.\n",up,um);
     um = -1.0f;

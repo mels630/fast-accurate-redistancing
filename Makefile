@@ -6,7 +6,7 @@ else
     CC = g++
 endif
 
-CFLAGS = -O2 -Wall
+CFLAGS = -O2 -Wall -std=c++11
 #CFLAGS= -pg -O2 -DDEBUG
 
 # Entries to bring executable up to date

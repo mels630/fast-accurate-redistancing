@@ -124,9 +124,9 @@ void Redist3::sort(double &a1, double &a2, double &a3)
 void Redist3::setInterfaceValues()
 { 
   Array3D<int> sgn(u.getm(),u.getn(),u.getk());
-  for(int ii=0; ii<sgn.getN(); ++ii)
+  for(size_t ii=0; ii<sgn.getN(); ++ii)
     sgn.put(static_cast<int>(mysign(u.get(ii))),ii);
-  for(int ii=0; ii<sgn.getN(); ++ii)
+  for(size_t ii=0; ii<sgn.getN(); ++ii)
     if((abs(sgn.getxp(ii)-sgn.get(ii)) + abs(sgn.getxm(ii)-sgn.get(ii)) +
         abs(sgn.getyp(ii)-sgn.get(ii)) + abs(sgn.getym(ii)-sgn.get(ii)) +
         abs(sgn.getzp(ii)-sgn.get(ii)) + abs(sgn.getzm(ii)-sgn.get(ii)) )>0)
@@ -158,16 +158,13 @@ void Redist3::setInterfaceValues()
 
 void Redist3::setInterfaceValuesDO()
 { 
-  //printf(" 0.1\n");fflush(stdout);
   Array3D<int> sgn(m,n,k);
 
   double meanabsbndval = 0.0f;
 
-  //printf(" 0.2\n");fflush(stdout);
-  for(int ii=0; ii<sgn.getN(); ++ii)
+  for(size_t ii=0; ii<sgn.getN(); ++ii)
     sgn.put(static_cast<int>(mysigntol(u0.get(ii),1e-10)),ii);
-  //printf(" 0.3\n");fflush(stdout);
-  for(int ii=0; ii<sgn.getN(); ++ii)
+  for(size_t ii=0; ii<sgn.getN(); ++ii)
     if((abs(sgn.getxp(ii)-sgn.get(ii)) + abs(sgn.getxm(ii)-sgn.get(ii)) +
         abs(sgn.getyp(ii)-sgn.get(ii)) + abs(sgn.getym(ii)-sgn.get(ii)) +
         abs(sgn.getzp(ii)-sgn.get(ii)) + abs(sgn.getzm(ii)-sgn.get(ii)))>0)
@@ -176,29 +173,21 @@ void Redist3::setInterfaceValuesDO()
       meanabsbndval += fabs(u0.get(ii));
     }
 
-  //printf(" 0.4\n");fflush(stdout);
-  // rescale u0 based on meanabsbndval
   const double dr = mymax3(dx,dy,dz);
   meanabsbndval /= static_cast<double>(bnd.size());
   if(meanabsbndval > dr)
-    for(int ii=0; ii<u0.getN(); ++ii)
+    for(size_t ii=0; ii<u0.getN(); ++ii)
       u0.put(u0.get(ii)/meanabsbndval*dr,ii);
 
-  //printf(" 0.5\n");fflush(stdout);
   vector<struct helt> bndval;
   bndval.resize(bnd.size());
   for(size_t ii=0; ii<bnd.size(); ++ii)
   {
     bndval[ii] = performDO(bnd[ii]);
-    //if(fabs(bndval[ii].d) > 0.5f || bnd[ii] == 15597)
-    //  printf(" bndval[%d].i = %d, bndval[%d].d = %f.\n",ii,bndval[ii].i,ii,bndval[ii].d);
-    // update cp guesses for later interface cells to use
     cpx.put(bndval[ii].aux[0],bndval[ii].i);
     cpy.put(bndval[ii].aux[1],bndval[ii].i);
     cpz.put(bndval[ii].aux[2],bndval[ii].i);
   }
-
-  //printf(" 0.6\n");fflush(stdout);
 
   for(size_t ii=0; ii<bnd.size();++ii)
   {
@@ -213,13 +202,13 @@ void Redist3::setInterfaceValuesDO()
 
 void Redist3::thresholdAwayFromInterface(vector<int> &bndry)
 {
-  for(int ii=0;ii<state.getN();++ii)
+  for(size_t ii=0;ii<state.getN();++ii)
     state.put(false,ii);
   for(vector<int>::iterator it=bndry.begin(); it != bndry.end(); ++it)
   {
     state.put(true,*it); // true indicates value is fixed (false otherwise)
   }
-  for(int ii=0;ii<state.getN();++ii)
+  for(size_t ii=0;ii<state.getN();++ii)
     if(!state.get(ii))
       u.put(mysign(u.get(ii))*thres,ii);
 }
@@ -675,7 +664,7 @@ void Redist3::bisect(const int idx, double (&guess)[3])
     guess[0] = xp[0]; guess[1] = xp[1]; guess[2] = xp[2];
     return;
   }
-  if(isnan(up/(up-um)))
+  if(std::isnan(up/(up-um)))
   {
     printf(" up = %.3e, um = %.3e. Setting um = -1.0f.\n",up,um);
     um = -1.0f;
@@ -694,7 +683,7 @@ void Redist3::bisect(const int idx, double (&guess)[3])
     {
       xm[0] = xt[0]; xm[1] = xt[1]; xm[2] = xt[2]; um = ut;
     }
-    if(isnan(up/(up-um)))
+    if(std::isnan(up/(up-um)))
     {
       printf(" up = %.4e, um = %.4e, setting up = 1.0f\n",up,um);
       up = 1.0f;

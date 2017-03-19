@@ -1,9 +1,6 @@
 #ifndef _DEFS_H_
 #define _DEFS_H_
 
-//#include <vector>
-//using std::vector;
-
 /*********** Define Pi *********/
 #ifndef PI
 #define TWOPI (6.283185307179586)
@@ -23,11 +20,7 @@
   #define mymax3(a,b,c) (mymax(mymax((a),(b)),(c)))
   #define mymin3(a,b,c) (mymin(mymin((a),(b)),(c)))
   #define mysign(x)  ( (x)<(0) ? (-1) : ( (x)==(0) ? (0):(1) ))
-  //#define mysign0m(x)  ( (x)>(0) ? (1) : (-1))
   #define mysigntol(x,tol) ( (x)<(-(tol)) ? (-1) : ( (x)>(tol) ? (1):(0) ))
-  //#define df(sn,i,n)   ((abs(sn[xp(i,n,n)]-sn[xm(i,n,n)])+abs(sn[yp(i,n,n)]-sn[ym(i,n,n)])) > 0)
-  //#define dfMN(sn,i,m,n)   ((abs(sn[xp(i,m,n)]-sn[xm(i,m,n)])+abs(sn[yp(i,m,n)]-sn[ym(i,m,n)])) > 0)
-  //#define dfMN2(sn,i,m,n,myep)   ((abs(sn[xp(i,m,n)]-sn[xm(i,m,n)])+abs(sn[yp(i,m,n)]-sn[ym(i,m,n)])+(abs(sn[xp(i,m,n)])<myep)+(abs(sn[xm(i,m,n)])<myep)+(abs(sn[yp(i,m,n)])<myep)+(abs(sn[ym(i,m,n)])<0)) > 0)
   #define pos(x) ( (x)>(0) ? (x) : (0))
 #endif
 /*************************************************/

@@ -4,34 +4,30 @@ IDArray3D::IDArray3D(const int nn, const int _flag) :
   Array3D<double>(nn),
   flag(_flag)
 {
-  qe.resize(N);
-  for(int ii=0; ii<N; ++ii)
-    qe[ii] = static_cast<double*>(NULL);
+  qe.assign(N, nullptr);
 }
 
 IDArray3D::IDArray3D(const int mm, const int nn, const int kk, const int _flag) :
   Array3D<double>(mm,nn,kk),
   flag(_flag)
 {
-  qe.resize(N);
-  for(int ii=0; ii<N; ++ii)
-    qe[ii] = static_cast<double*>(NULL);
+  qe.assign(N, nullptr);
 }
 
 IDArray3D::IDArray3D(const Array3D<double> &input, const int _flag) :
   Array3D<double>(input,0),
   flag(_flag)
 {
-  qe.resize(N);
-  for(int ii=0; ii<N; ++ii)
-    qe[ii] = static_cast<double*>(NULL);
+  qe.assign(N, nullptr);
 }
 
 IDArray3D::~IDArray3D()
 {
-  for(int ii=0; ii<N; ++ii)
-    if(qe[ii] != NULL)
+  for(size_t ii=0; ii<N; ++ii)
+    if(qe[ii] != nullptr) {
       delete [] qe[ii];
+      qe[ii] = nullptr;
+    }
 }
 
 double IDArray3D::interpolate(double x, double y, double z)
@@ -48,7 +44,7 @@ double IDArray3D::interpolate(double x, double y, double z)
     int ii = static_cast<int>(round(y*static_cast<double>(m)));    // [0,m]
     int jj = static_cast<int>(round(x*static_cast<double>(n)));    // [0,n] 
     int kk = static_cast<int>(round(z*static_cast<double>(k)));    // [0,k] 
-    int idx = inrange(ii,m) + inrange(jj,n)*m + inrange(kk,k)*m*n; // nearest grid point 
+    int idx = inrange(ii, int(m)) + inrange(jj, int(n))*m + inrange(kk, int(k))*m*n; // nearest grid point 
 
     const double rx = x*static_cast<double>(n)-static_cast<double>(jj); // in range [-1/2,1/2], not scaled by dx -- cancels with terms in qe matrix   
     const double ry = y*static_cast<double>(m)-static_cast<double>(ii);
@@ -133,10 +129,10 @@ double IDArray3D::interpolate(double x, double y, double z)
   }
   else if(flag == 1)
   { 
-    int ii = static_cast<int>(floor(y*static_cast<double>(m)));    // [0,m)
-    int jj = static_cast<int>(floor(x*static_cast<double>(n)));    // [0,n) 
-    int kk = static_cast<int>(floor(z*static_cast<double>(k)));    // [0,k)
-    int idx = inrange(ii,m) + inrange(jj,n)*m + inrange(kk,k)*m*n; // nearest grid point 
+    size_t ii = static_cast<size_t>(floor(y*static_cast<double>(m)));    // [0,m)
+    size_t jj = static_cast<size_t>(floor(x*static_cast<double>(n)));    // [0,n) 
+    size_t kk = static_cast<size_t>(floor(z*static_cast<double>(k)));    // [0,k)
+    size_t idx = inrange(ii,m) + inrange(jj,n)*m + inrange(kk,k)*m*n; // nearest grid point 
 
     const double rx = x*static_cast<double>(n)-static_cast<double>(jj); // in range [-1/2,1/2], not scaled by dx -- cancels with terms in qe matrix   
     const double ry = y*static_cast<double>(m)-static_cast<double>(ii);

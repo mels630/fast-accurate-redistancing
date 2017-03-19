@@ -7,7 +7,7 @@ void fillSign(Array3D<double> &u, const double nullval, const double newval)
   vector<int> ind;
   ind.reserve(u.getN());
 
-  for(int ii=0; ii<u.getN(); ++ii)
+  for(size_t ii=0; ii<u.getN(); ++ii)
     if(fabs(u.get(ii)-nullval) > TOL)
       ind.push_back(ii);
 
@@ -61,7 +61,7 @@ double l2err(const Array3D<double> u, const Array3D<double> v)
     return(-1.0f);
   const double dv = 1.0f / static_cast<double>(u.getN());
   double err = 0.0f;
-  for(int ii=0; ii<u.getN(); ++ii)
+  for(size_t ii=0; ii<u.getN(); ++ii)
     err += (v.get(ii)-u.get(ii))*(v.get(ii)-u.get(ii));
   return(sqrt(err*dv));
 }
@@ -69,12 +69,12 @@ double l2err(const Array3D<double> u, const Array3D<double> v)
 void ccomb(const double (&x1)[3], const double (&x2)[3], double (&xr)[3], double theta)
 { // forms convex combination xr = theta*x1 + (1-theta)*x2
   double diff[3];
-  if(theta < 0.0f || theta > 1.0f || isnan(theta))
+  if(theta < 0.0f || theta > 1.0f || std::isnan(theta))
   {
     cout << "theta = " << theta << endl;
     //abort();
   }
-  if(isnan(theta))
+  if(std::isnan(theta))
     theta = 0.5f;
 
   diff[0] = pd(x2[0],x1[0]);
@@ -90,12 +90,12 @@ void ccomb(const double (&x1)[3], const double (&x2)[3], double (&xr)[3], double
 void ccomb(const double (&x1)[4], const double (&x2)[4], double (&xr)[3], double theta)
 { // forms convex combination xr = theta*x1 + (1-theta)*x2. Ignores third value in x1/x2
   double diff[3];
-  if(theta < 0.0f || theta > 1.0f || isnan(theta))
+  if(theta < 0.0f || theta > 1.0f || std::isnan(theta))
   {
     cout << "theta = " << theta << endl;
     //abort();
   }
-  if(isnan(theta))
+  if(std::isnan(theta))
     theta = 0.5f;
 
   diff[0] = pd(x2[0],x1[0]);

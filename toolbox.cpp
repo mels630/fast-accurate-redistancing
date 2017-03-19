@@ -500,12 +500,12 @@ double normalize(struct point &vec)
 void ccomb(const double *x1, const double *x2, double *xr, double theta, const double xlen, const double ylen)
 { // forms convex combination xr = theta*x1 + (1-theta)*x2
   double diff[2];
-  if(theta < 0.0f || theta > 1.0f || isnan(theta))
+  if(theta < 0.0f || theta > 1.0f || std::isnan(theta))
   {
     cout << "theta = " << theta << endl;
     //abort();
   }
-  if(isnan(theta))
+  if(std::isnan(theta))
     theta = 0.5f;
 
   diff[0] = pdl(x2[0],x1[0],xlen);
