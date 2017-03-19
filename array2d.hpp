@@ -1,6 +1,10 @@
 #ifndef _ARRAY2D_HPP_
 #define _ARRAY2D_HPP_
 
+// To-do:
+// [1] Doxygen
+// [2] Sub-class HexArray2D (Array2D with hexagonal connectivity)
+
 #include<vector>
 #include<cstdlib>
 #include<iostream>
@@ -9,6 +13,9 @@
 #include<string>
 #include<stack>
 #include<cassert>
+#include<cstring>
+#include<algorithm>
+#include<memory>
 
 #include "defs.h"
 
@@ -28,7 +35,6 @@ protected:
 
   inline idx_t sub2ind(idx_t const ii, idx_t const jj) const;
   void transposeData();
-  void flipData(idx_t const ii, idx_t const jj);
 
   void labelHexCC(T const value, const bool sign, idx_t const idx, Array2D<int> &label) const;
   void labelHexCCX(idx_t const idx, T const val, std::vector<idx_t> &changed);
@@ -72,13 +78,13 @@ public:
   inline T fourNborMin(idx_t const idx) const;
   inline T fourNborMax(idx_t const idx) const;
   void dump() const;
-  void dump(std::string filename) const;
+  void dump(std::string const &filename) const;
   void dumpbooleq(T const val) const;
   void dumpboolgeq(T const val) const;
   void dumpboolleq(T const val) const;
   T* dataAddress();
-  std::vector<T> returnData() const;
-  T* returnDataArray() const;
+  std::vector<T> const& returnData() const;
+  std::shared_ptr<T> returnDataArray() const;
   Array2D<T> duplicateArray2D() const;
   inline double getX(idx_t const idx) const;
   inline double getY(idx_t const idx) const;
@@ -125,79 +131,6 @@ public:
 };
 
 template <typename T>
-inline idx_t Array2D<T>::sub2ind(idx_t const ii, idx_t const jj) const
-{
-  assert((ii+m*jj) < N);
-  return(ii+m*jj);
-}
-
-template <typename T> 
-Array2D<T>::Array2D(idx_t const nn) :
-  m(nn),
-  n(nn),
-  N(nn*nn),
-  dx(1.0f/static_cast<double>(n)),
-  dy(1.0f/static_cast<double>(m))
-{
-  if(N <= 0)
-  {
-    std::cout << "N = " << N << ", should be positive. Aborting ..." << std::endl;
-    abort();
-  }
-  data.resize(N);
-}
-
-template <typename T> 
-Array2D<T>::Array2D(idx_t const mm, idx_t const nn) :
-  m(mm),
-  n(nn),
-  N(mm*nn),
-  dx(1.0f/static_cast<double>(n)),
-  dy(1.0f/static_cast<double>(m))
-{
-  if(N <= 0)
-  {
-    std::cout << "N = " << N << ", should be positive. Aborting ..." << std::endl;
-    abort();
-  }
-  data.resize(N);
-}
-
-template <typename T>
-Array2D<T>::Array2D(T* const indata, idx_t const mm, idx_t const nn) :
-  m(mm),
-  n(nn),
-  N(mm*nn),
-  dx(1.0f/static_cast<double>(n)),
-  dy(1.0f/static_cast<double>(m))
-{
-  if(N <= 0)
-  {
-    std::cout << "N = " << N << ", should be positive. Aborting ..." << std::endl;
-    abort();
-  }
-  data.resize(N);
-  for(idx_t ii=0; ii<N; ++ii) // deep copy
-    data[ii] = indata[ii];
-}
-
-template <typename T> 
-Array2D<T>::Array2D(idx_t const mm, idx_t const nn, double const _dx, double const _dy) :
-  m(mm),
-  n(nn),
-  N(mm*nn),
-  dx(_dx),
-  dy(_dy)
-{
-  if(N <= 0)
-  {
-    std::cout << "N = " << N << ", should be positive. Aborting ..." << std::endl;
-    abort();
-  }
-  data.resize(N);
-}
-
-template <typename T>
 Array2D<T>::Array2D(T* const indata, idx_t const mm, idx_t const nn, double const _dx, double const _dy) :
   m(mm),
   n(nn),
@@ -210,38 +143,51 @@ Array2D<T>::Array2D(T* const indata, idx_t const mm, idx_t const nn, double cons
     std::cout << "N = " << N << ", should be positive. Aborting ..." << std::endl;
     abort();
   }
-  data.resize(N);
-  for(idx_t ii=0; ii<N; ++ii) // deep copy
-    data[ii] = indata[ii];
+  if (indata != nullptr)
+    data = std::vector<T>(indata, indata+N);
+  else
+    data.assign(N, T(0));
 }
+
+template <typename T> 
+Array2D<T>::Array2D(idx_t const nn) :
+  Array2D(nullptr, nn, nn)
+{ }
+
+template <typename T> 
+Array2D<T>::Array2D(idx_t const mm, idx_t const nn) :
+  Array2D(nullptr, mm, nn)
+{ }
+
+template <typename T>
+Array2D<T>::Array2D(T* const indata, idx_t const mm, idx_t const nn) :
+  Array2D(indata, mm, nn, 1./static_cast<double>(nn), 1./static_cast<double>(mm))
+{ }
+
+template <typename T> 
+Array2D<T>::Array2D(idx_t const mm, idx_t const nn, double const _dx, double const _dy) :
+  Array2D(nullptr, mm, nn, _dx, _dy)
+{ }
 
 template <typename T>
 Array2D<T>::Array2D(Array2D<T> const &Input, int const CopyFlag) :
-  m(Input.m),
-  n(Input.n),
-  N(Input.N),
-  dx(Input.dx),
-  dy(Input.dy)
+  Array2D(Input.m, Input.n, Input.dx, Input.dy)
 {
-  switch ( CopyFlag ) {
-  case 0:  // deep copy
+  if (CopyFlag == 0) // deep copy
     data = Input.data;
-    break;
-  default: // structure copy
-    data.resize(N);
-    break;
-  }
+  // else if (CopyFlag == 1) // structure copy, done by call to Array2D constructor
 }
 
 template <typename T>
 Array2D<T>::Array2D(Array2D<T> const &Input) :
-  m(Input.m),
-  n(Input.n),
-  N(Input.N),
-  dx(Input.dx),
-  dy(Input.dy)
+  Array2D(Input, 0) // default to deep copy
+{ } 
+
+template <typename T>
+inline idx_t Array2D<T>::sub2ind(idx_t const ii, idx_t const jj) const
 {
-  data = Input.data;
+  assert((ii < m) && (jj < n));
+  return(ii+m*jj);
 }
 
 template <typename T>
@@ -394,9 +340,8 @@ void Array2D<T>::copyData(const Array2D<T> &input)
 template <typename T>
 inline std::vector<idx_t> Array2D<T>::connectedComponent(idx_t const idx, double const size) 
 { // calls connectedComponent with changeval==-1
-  return(connectedComponent(idx,size,-1));
+  return(connectedComponent(idx,size,T(-1)));
 }
-
 
 template <typename T>
 std::vector<idx_t> Array2D<T>::connectedComponent(idx_t const idx, double const size, T const changeval) 
@@ -512,50 +457,39 @@ template <typename T>
 inline T Array2D<T>::maxval() const
 {
   assert(N>0);
-  T mval = data[0];
-  for(idx_t ii=1;ii<N;++ii)
-    mval = mymax(mval,data[ii]);
-  return(mval);
+  return *std::max_element(data.begin(), data.end());
 }
 
 template <typename T>
 inline T Array2D<T>::minval() const
 {
   assert(N>0);
-  T mval = data[0];
-  for(idx_t ii=1;ii<N;++ii)
-    mval = mymin(mval,data[ii]);
-  return(mval);
+  return *std::min_element(data.begin(), data.end());
 }
 
 template <typename T>
 inline T Array2D<T>::minabsval() const
 {
-  if(N == 0)
-    return(0);
-  T mval = data[0]*mysign(data[0]);
-  for(idx_t ii=1;ii<N;++ii)
-    mval = mymin(mval,data[ii]*mysign(data[ii]));
-  return(mval);
+  assert(N>0);
+  return *std::min_element(data.begin(), data.end(), [](T const &v1, T const &v2)->bool { return std::abs(v1) < std::abs(v2); });
 }
 
 template <typename T>
 inline void Array2D<T>::fillWithValue(T const value)
 {
-  for(idx_t ii=0; ii<N; ++ii)
-    data[ii] = value;
+  std::fill(data.begin(), data.end(), value);
 }
 
 template <typename T>
 inline T Array2D<T>::fourNborMin(idx_t const idx) const
 {
-  return(mymin(mymin(data[xp(idx)],data[xm(idx)]),mymin(data[yp(idx)],data[ym(idx)])));
+  return(std::min(std::min(data[xp(idx)],data[xm(idx)]),std::min(data[yp(idx)],data[ym(idx)])));
 }
 
 template <typename T>
 inline T Array2D<T>::fourNborMax(idx_t const idx) const
 {
-  return(mymax(mymax(data[xp(idx)],data[xm(idx)]),mymax(data[yp(idx)],data[ym(idx)])));
+  return(std::max(std::max(data[xp(idx)],data[xm(idx)]),std::max(data[yp(idx)],data[ym(idx)])));
 }
 
 template <typename T>
@@ -576,7 +510,7 @@ void Array2D<T>::dump() const
 }
 
 template <typename T>
-void Array2D<T>::dump(std::string filename) const
+void Array2D<T>::dump(std::string const &filename) const
 {
   std::ofstream of;
   of.open(filename.c_str());
@@ -637,61 +571,47 @@ T* Array2D<T>::dataAddress()
 }
 
 template <typename T>
-std::vector<T> Array2D<T>::returnData() const
-{ // returns a copy of the data std::vector
+std::vector<T> const& Array2D<T>::returnData() const
+{ // returns a const ref to data std::vector
   return(data);
 }
 
 template <typename T>
-T* Array2D<T>::returnDataArray() const
+std::shared_ptr<T> Array2D<T>::returnDataArray() const
 { // returns a pointer to a new (independent) array with data copied in.
-  T* newArray = new T[getN()];
-  for(idx_t ii=0;ii<N;++ii)
-    newArray[ii] = get(ii);
-  return(newArray);
+  std::shared_ptr<T> pTData = std::make_shared<T>(getN());
+  std::memcpy(pTData, &data, getN() * sizeof(T));
+  return pTData;
 }
 
 
 template <typename T>
 Array2D<T> Array2D<T>::duplicateArray2D() const
 { // deep copy of Array2D data
-  Array2D<T> v(m,n,dx,dy);
-  v.data = this->data;
-  return(v);
+  return *this;
 }
 
 template <typename T>
 idx_t Array2D<T>::diff1Nbors(T const val, idx_t idx)
 { // count the number of 4-neighbors of idx different than val
-  idx_t diff = 0;
-  diff += (val != get(xp(idx))) + (val != get(xm(idx))) 
-           + (val != get(yp(idx))) + (val != get(ym(idx)));
-  return(diff);
+  return (val != get(xp(idx))) + (val != get(xm(idx))) 
+    + (val != get(yp(idx))) + (val != get(ym(idx)));
 }
 
 template <typename T>
 idx_t Array2D<T>::diff2Nbors(T const val, idx_t idx)
 { // count the number of 2nd-nearest-neighbors of idx different than val
-  idx_t diff = 0;
-  diff += (val != get(xp(yp(idx)))) + (val != get(xm(yp(idx)))) 
-          + (val != get(xp(ym(idx)))) + (val != get(xm(ym(idx))));
-  return(diff);
+  return  (val != get(xp(yp(idx)))) + (val != get(xm(yp(idx)))) 
+    + (val != get(xp(ym(idx)))) + (val != get(xm(ym(idx))));
 }
 
 template <typename T>
 void Array2D<T>::transposeData()
 {
+  assert(m==n);
   for(idx_t ii=0;ii<n;++ii)
     for(idx_t jj=0;jj<n;++jj)
-      flipData(ii,jj);
-}
-
-template <typename T>
-void Array2D<T>::flipData(idx_t const ii, idx_t const jj)
-{
-  T tmp = data[ii+n*jj];
-  data[ii+n*jj] = data[jj+n*ii];
-  data[jj+n*ii] = tmp;
+      std::swap(data[ii+n*jj], data[jj+n*ii]);
 }
 
 template <typename T>
@@ -1072,11 +992,7 @@ void Array2D<T>::labelHexCCX(idx_t const idx, T const val, std::vector<idx_t> &c
 template <typename T>
 idx_t Array2D<T>::countVal(T const value) const
 {
-  idx_t count = 0;
-  for(int ii=0; ii<N; ++ii)
-    if(data[ii] == value)
-      count++;
-  return(count);
+  return std::count_if(data.begin(), data.end(), [&value](T const &t)->bool{return value == t;});
 }
 
 template <typename T>
@@ -1103,65 +1019,63 @@ inline Array2D<T>& Array2D<T>::operator= ( Array2D<T> const& Vec )
 template <typename T>
 inline Array2D<T>& Array2D<T>::operator*= ( T const Value )
 {
-  for ( idx_t i = 0; i < N; ++i )
-    data[i] *= Value;
+  std::transform(data.begin(), data.end(), data.begin(),
+                 [&Value](T const &t)->T { return Value*t; });
   return *this;
 }
 
 template <typename T>
 inline Array2D<T>& Array2D<T>::operator/= ( T const Value )
 {
-  for ( idx_t i = 0; i < N; ++i )
-    data[i] /= Value;
+  assert(Value != T(0));
+  std::transform(data.begin(), data.end(), data.begin(),
+                 [&Value](T const &t)->T { return t/Value; });
   return *this;
 }
 
 template <typename T>
 inline Array2D<T>& Array2D<T>::operator+= ( const Array2D<T> &Vec )
 {
-  for ( idx_t i = 0; i < N; ++i )
-    data[i] += Vec.get( i );
+  assert(Vec.getN() == getN());
+  std::transform(data.begin(), data.end(), Vec.returnData(), data.begin(),
+                 [](T const &inp1, T const &inp2)->T { return inp1+inp2; });
   return *this;
 }
 
 template <typename T>
 inline Array2D<T>& Array2D<T>::operator-= ( const Array2D<T> &Vec )
 {
-  for ( idx_t i = 0; i < N; ++i )
-    data[i] -= Vec.get( i );
+  assert(Vec.getN() == getN());
+  std::transform(data.begin(), data.end(), Vec.returnData(), data.begin(),
+                 [](T const &inp1, T const &inp2)->T { return inp1-inp2; });
   return *this;
 }
 
 template <typename T>
 inline void Array2D<T>::setAll( T const val )
 {
-  for ( idx_t i = 0; i < N; ++i )
-    data[i] = val;
+  fillWithValue(val); // setAll is a redundant API
 }
 
 template <typename T>
 inline void Array2D<T>::addMultiple ( const Array2D<T>& Vec, T Factor )
 {
-  for ( idx_t i = 0; i < N; ++i )
-    data[i] += Vec.get( i ) * Factor;
+  assert(getN() == Vec.getN());
+  std::transform(data.begin(), data.end(), Vec.returnDataArray(), data.begin(),
+                 [&Factor](T const &t1, T const &t2)->T { return t1 + t2*Factor; });
 }
 
 template <typename T>
 inline T Array2D<T>::dotProd ( const Array2D<T>& Vec ) const
 {
-  T val = 0;
-  for ( idx_t i = 0 ; i < N ; ++i )
-    val += data[i] * Vec.data[i];
-  return val;
+  assert(getN() == Vec.getN());
+  return std::inner_product(data.begin(), data.end(), Vec.returnDataArray(), T(0));
 }
 
 template <typename T>
 inline T Array2D<T>::getNormSqr() const
 {
-  T val = 0;
-  for ( idx_t i = 0; i < N; ++i )
-    val += data[i] * data[i];
-  return val;
+  return std::accumulate(data.begin(), data.end(), T(0), [](T const &partSum, T const &t)->T { return partSum + t*t; });
 }
 
 template <typename T>
