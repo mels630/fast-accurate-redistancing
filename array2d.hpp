@@ -8,22 +8,16 @@
 #include<cmath>
 #include<string>
 #include<stack>
-#include "defs.h"
 #include<cassert>
 
-using std::vector;
-using std::cout;
-using std::endl;
-using std::string;
-using std::ofstream;
-using std::stack;
+#include "defs.h"
 
 template <typename T> 
 class Array2D
 {
 
 protected:
-  vector<T> data; // contains (m x n) = N elements of type T
+  std::vector<T> data; // contains (m x n) = N elements of type T
   const int m;          // number of elements in the y-direction
   const int n;          // number of elements in the x-direction
   const int N;          // total number of elements
@@ -36,8 +30,8 @@ protected:
   void flipData(const int ii, const int jj);
 
   void labelHexCC(const T value, const bool sign, const int idx, Array2D<int> &label) const;
-  void labelHexCCX(const int idx, const int val, vector<int> &changed);
-  void labelHexCCY(const int idx, const int val, vector<int> &changed);
+  void labelHexCCX(const int idx, const int val, std::vector<int> &changed);
+  void labelHexCCY(const int idx, const int val, std::vector<int> &changed);
 
 public: 
   explicit Array2D<T>(const int nn);
@@ -63,10 +57,10 @@ public:
   inline void putadd(const T value, const int idx);
   inline void putadd(const T value, const int ii, const int jj);
   void copyData(const Array2D<T> &input);
-  inline vector<int> connectedComponent(const int idx, const double size);
-  vector<int> connectedComponent(const int idx, const double size, const int changeval);
-  vector<int> connectedComponentPM(const int idx, const double size);
-  vector<int> boundaryOfCC(const vector<int> cc);
+  inline std::vector<int> connectedComponent(const int idx, const double size);
+  std::vector<int> connectedComponent(const int idx, const double size, const int changeval);
+  std::vector<int> connectedComponentPM(const int idx, const double size);
+  std::vector<int> boundaryOfCC(const std::vector<int> cc);
   int diff1Nbors(int val, int idx);
   int diff2Nbors(int val, int idx);
   inline T maxval() const;
@@ -76,12 +70,12 @@ public:
   inline T fourNborMin(const int idx) const;
   inline T fourNborMax(const int idx) const;
   void dump() const;
-  void dump(string filename) const;
+  void dump(std::string filename) const;
   void dumpbooleq(const T val) const;
   void dumpboolgeq(const T val) const;
   void dumpboolleq(const T val) const;
   T* dataAddress();
-  vector<T> returnData() const;
+  std::vector<T> returnData() const;
   T* returnDataArray() const;
   Array2D<T> duplicateArray2D() const;
   inline double getX(const int idx) const;
@@ -145,7 +139,7 @@ Array2D<T>::Array2D(const int nn) :
 {
   if(N <= 0)
   {
-    cout << "N = " << N << ", should be positive. Aborting ..." << endl;
+    std::cout << "N = " << N << ", should be positive. Aborting ..." << std::endl;
     abort();
   }
   data.resize(N);
@@ -161,7 +155,7 @@ Array2D<T>::Array2D(const int mm, const int nn) :
 {
   if(N <= 0)
   {
-    cout << "N = " << N << ", should be positive. Aborting ..." << endl;
+    std::cout << "N = " << N << ", should be positive. Aborting ..." << std::endl;
     abort();
   }
   data.resize(N);
@@ -177,7 +171,7 @@ Array2D<T>::Array2D(const T* indata, const int mm, const int nn) :
 {
   if(N <= 0)
   {
-    cout << "N = " << N << ", should be positive. Aborting ..." << endl;
+    std::cout << "N = " << N << ", should be positive. Aborting ..." << std::endl;
     abort();
   }
   data.resize(N);
@@ -195,7 +189,7 @@ Array2D<T>::Array2D(const int mm, const int nn, const double _dx, const double _
 {
   if(N <= 0)
   {
-    cout << "N = " << N << ", should be positive. Aborting ..." << endl;
+    std::cout << "N = " << N << ", should be positive. Aborting ..." << std::endl;
     abort();
   }
   data.resize(N);
@@ -211,7 +205,7 @@ Array2D<T>::Array2D(const T* indata, const int mm, const int nn, const double _d
 {
   if(N <= 0)
   {
-    cout << "N = " << N << ", should be positive. Aborting ..." << endl;
+    std::cout << "N = " << N << ", should be positive. Aborting ..." << std::endl;
     abort();
   }
   data.resize(N);
@@ -390,21 +384,21 @@ template <typename T>
 void Array2D<T>::copyData(const Array2D<T> &input)
 { // copy data after checking for agreement of sizes
   if((input.getm() != m) || (input.getn() != n))
-    cout << "Data does not agree in size. Skipping call to copyData" << endl;
+    std::cout << "Data does not agree in size. Skipping call to copyData" << std::endl;
   else
     data = input.returnData();
 }
 
 template <typename T>
-inline vector<int> Array2D<T>::connectedComponent(const int idx, const double size) 
+inline std::vector<int> Array2D<T>::connectedComponent(const int idx, const double size) 
 { // calls connectedComponent with changeval==-1
   return(connectedComponent(idx,size,-1));
 }
 
 
 template <typename T>
-vector<int> Array2D<T>::connectedComponent(const int idx, const double size, const int changeval) 
-{ // returns a vector containing the index of all pixels in the connected component identified by q==q[idx] containing idx
+std::vector<int> Array2D<T>::connectedComponent(const int idx, const double size, const int changeval) 
+{ // returns a std::vector containing the index of all pixels in the connected component identified by q==q[idx] containing idx
   // Change values to changeval when touched to indicate they've been
   // checked; then change all the values back to the original
   // value at the end.
@@ -414,7 +408,7 @@ vector<int> Array2D<T>::connectedComponent(const int idx, const double size, con
   // by the connected component
   int value = get(idx);
   int curr = 0;
-  vector<int> v;
+  std::vector<int> v;
   v.reserve(static_cast<int>(ceil(size)*N));
   v.push_back(idx);
   put(-1,idx); 
@@ -438,8 +432,8 @@ vector<int> Array2D<T>::connectedComponent(const int idx, const double size, con
 }
 
 template <typename T>
-vector<int> Array2D<T>::connectedComponentPM(const int idx, const double size) 
-{ // returns a vector containing the index of all pixels in the connected component identified by q== \pm q[idx] containing idx
+std::vector<int> Array2D<T>::connectedComponentPM(const int idx, const double size) 
+{ // returns a std::vector containing the index of all pixels in the connected component identified by q== \pm q[idx] containing idx
   // Change values to 0 when touched to indicate they've been
   // checked; then change all the values back to the original
   // value at the end.
@@ -449,8 +443,8 @@ vector<int> Array2D<T>::connectedComponentPM(const int idx, const double size)
   // by the connected component
   int value = abs(get(idx));
   int curr = 0;
-  vector<int> v;  // indices
-  vector<bool> s; // sign (+:true -:false)
+  std::vector<int> v;  // indices
+  std::vector<bool> s; // sign (+:true -:false)
   v.reserve(static_cast<int>(ceil(size)*N));
   s.reserve(static_cast<int>(ceil(size)*N));
   v.push_back(idx);
@@ -495,10 +489,10 @@ vector<int> Array2D<T>::connectedComponentPM(const int idx, const double size)
 }
 
 template <typename T>
-vector<int> Array2D<T>::boundaryOfCC(const vector<int> cc)
+std::vector<int> Array2D<T>::boundaryOfCC(const std::vector<int> cc)
 {
   int value = get(cc[0]);
-  vector<int> v;
+  std::vector<int> v;
   v.reserve(cc.size());
   for(int ii=0;ii<cc.size();++ii)
     if(get(xp(cc[ii]))!=value)
@@ -565,24 +559,24 @@ inline T Array2D<T>::fourNborMax(const int idx) const
 template <typename T>
 void Array2D<T>::dump() const
 {
-  cout.setf(std::ios::fixed,std::ios::floatfield);
-  cout.setf(std::ios::showpos);
-  cout.precision(5);
+  std::cout.setf(std::ios::fixed,std::ios::floatfield);
+  std::cout.setf(std::ios::showpos);
+  std::cout.precision(5);
   for(int ii=0; ii < m; ++ii)
   {
     for(int jj=0; jj < n; ++jj)
-      cout << get(ii,jj) << " ";
-    cout << endl;
+      std::cout << get(ii,jj) << " ";
+    std::cout << std::endl;
   }
-  cout.unsetf(std::ios::fixed);
-  cout.unsetf(std::ios::floatfield);
-  cout.unsetf(std::ios::showpos);
+  std::cout.unsetf(std::ios::fixed);
+  std::cout.unsetf(std::ios::floatfield);
+  std::cout.unsetf(std::ios::showpos);
 }
 
 template <typename T>
-void Array2D<T>::dump(string filename) const
+void Array2D<T>::dump(std::string filename) const
 {
-  ofstream of;
+  std::ofstream of;
   of.open(filename.c_str());
   
   of.setf(std::ios::fixed,std::ios::floatfield);
@@ -592,7 +586,7 @@ void Array2D<T>::dump(string filename) const
   {
     for(int jj=0; jj < n; ++jj)
       of << get(ii,jj) << " ";
-    of << endl;
+    of << std::endl;
   }
   of.unsetf(std::ios::fixed);
   of.unsetf(std::ios::floatfield);
@@ -607,8 +601,8 @@ void Array2D<T>::dumpbooleq(const T val) const
   for(int ii=0; ii < m; ++ii)
   {
     for(int jj=0; jj < n; ++jj)
-      cout << (get(ii,jj)==val);
-    cout << endl;
+      std::cout << (get(ii,jj)==val);
+    std::cout << std::endl;
   }
 }
 
@@ -618,8 +612,8 @@ void Array2D<T>::dumpboolgeq(const T val) const
   for(int ii=0; ii < m; ++ii)
   {
     for(int jj=0; jj < n; ++jj)
-      cout << (get(ii,jj)>=val);
-    cout << endl;
+      std::cout << (get(ii,jj)>=val);
+    std::cout << std::endl;
   }
 }
 
@@ -629,8 +623,8 @@ void Array2D<T>::dumpboolleq(const T val) const
   for(int ii=0; ii < m; ++ii)
   {
     for(int jj=0; jj < n; ++jj)
-      cout << (get(ii,jj)<=val);
-    cout << endl;
+      std::cout << (get(ii,jj)<=val);
+    std::cout << std::endl;
   }
 }
 
@@ -641,8 +635,8 @@ T* Array2D<T>::dataAddress()
 }
 
 template <typename T>
-vector<T> Array2D<T>::returnData() const
-{ // returns a copy of the data vector
+std::vector<T> Array2D<T>::returnData() const
+{ // returns a copy of the data std::vector
   return(data);
 }
 
@@ -747,7 +741,7 @@ inline int Array2D<T>::hexN2(const int idx, const int nbor) const
     return(ym(idx));
     break;
   default:
-    cout << "hexN2 only accepts values between 1 and 6 in the second argument." << endl;
+    std::cout << "hexN2 only accepts values between 1 and 6 in the second argument." << std::endl;
     return(-1);
   }
 }
@@ -789,7 +783,7 @@ inline int Array2D<T>::hexN(const int idx, const int nbor) const
       return(ym(idx));
     break;
   default:
-    cout << "hexN only accepts values between 1 and 6 in the second argument." << endl;
+    std::cout << "hexN only accepts values between 1 and 6 in the second argument." << std::endl;
     return(-1);
   }
 }
@@ -881,7 +875,7 @@ template <typename T>
 void Array2D<T>::labelHexCC(const T value, const bool sign, const int idx, Array2D<int> &label) const
 { // recursively add pieces of this connected component
 
-  stack<int> s;
+  std::stack<int> s;
   s.push(idx);
   int stackval;
   while(!s.empty())
@@ -904,7 +898,7 @@ void Array2D<T>::labelHexCC(const T value, const bool sign, const int idx, Array
 template <typename T>
 bool Array2D<T>::labelHexFromIdxY(const int idx)
 { // Try to label from idx without crossing Y=0, and see if the component is "infinite" from top to bottom
-  vector<int> changed;
+  std::vector<int> changed;
   const int val = data[idx];
 
   for(int ii=0; ii<n; ++ii)
@@ -935,7 +929,7 @@ bool Array2D<T>::labelHexFromIdxY(const int idx)
 
   //if(connection)
   //{
-  //  cout << "Connection in Y found for " << val << endl;
+  //  std::cout << "Connection in Y found for " << val << std::endl;
   //  dumpbool(0);
   //}
 
@@ -948,7 +942,7 @@ bool Array2D<T>::labelHexFromIdxY(const int idx)
 template <typename T>
 bool Array2D<T>::labelHexFromIdxX(const int idx)
 { // Try to label from idx without crossing X=0, and see if the component is "infinite" from left to right
-  vector<int> changed;
+  std::vector<int> changed;
   const int val = data[idx];
 
   //if(idx==0)
@@ -956,7 +950,7 @@ bool Array2D<T>::labelHexFromIdxX(const int idx)
   //  int zv = 0;
   //  for(int ii=0;ii<N;++ii)
   //    zv += (data[ii]==0);
-  //  cout << "Prelooking for connection at 0, there are " << zv << " zero values in data." << endl;
+  //  std::cout << "Prelooking for connection at 0, there are " << zv << " zero values in data." << std::endl;
   //}
 
   for(int ii=0; ii<m; ++ii)
@@ -995,7 +989,7 @@ bool Array2D<T>::labelHexFromIdxX(const int idx)
 
   //if(connection && (idx==0))
   //{
-  //  cout << "Connection in X found for " << val << endl;
+  //  std::cout << "Connection in X found for " << val << std::endl;
   //  dumpbool(0);
   //}
 
@@ -1006,9 +1000,9 @@ bool Array2D<T>::labelHexFromIdxX(const int idx)
 }
 
 template <typename T>
-void Array2D<T>::labelHexCCY(const int idx, const int val, vector<int> &changed)
+void Array2D<T>::labelHexCCY(const int idx, const int val, std::vector<int> &changed)
 { // recursively add pieces of this connected component
-  stack<int> s;
+  std::stack<int> s;
   s.push(idx);
   int stackval;
   while(!s.empty())
@@ -1041,9 +1035,9 @@ void Array2D<T>::labelHexCCY(const int idx, const int val, vector<int> &changed)
 }
 
 template <typename T>
-void Array2D<T>::labelHexCCX(const int idx, const int val, vector<int> &changed)
+void Array2D<T>::labelHexCCX(const int idx, const int val, std::vector<int> &changed)
 { // recursively add pieces of this connected component
-  stack<int> s;
+  std::stack<int> s;
   s.push(idx);
   int stackval;
   while(!s.empty())
@@ -1057,7 +1051,7 @@ void Array2D<T>::labelHexCCX(const int idx, const int val, vector<int> &changed)
         if(data[cstackval] == val)
         {
           //if(cstackval == (N-1))
-          //  cout << "HEY1" << endl;
+          //  std::cout << "HEY1" << std::endl;
           data[cstackval] = 0;
           changed.push_back(cstackval);
           s.push(cstackval);
@@ -1072,7 +1066,7 @@ void Array2D<T>::labelHexCCX(const int idx, const int val, vector<int> &changed)
         if(data[cstackval] == val)
         {
           //if(cstackval == (N-1))
-          //  cout << "HEY2" << endl;
+          //  std::cout << "HEY2" << std::endl;
           data[cstackval] = 0;
           changed.push_back(cstackval);
           s.push(cstackval);
@@ -1087,7 +1081,7 @@ void Array2D<T>::labelHexCCX(const int idx, const int val, vector<int> &changed)
           if(data[cstackval] == val)
           {
             //if(cstackval == (N-1))
-            //  cout << "HEY3, stackval = " << stackval << ", jj[ii] = " << jj[ii] << ", ii = " << ii << endl;
+            //  std::cout << "HEY3, stackval = " << stackval << ", jj[ii] = " << jj[ii] << ", ii = " << ii << std::endl;
             data[cstackval] = 0;
             changed.push_back(cstackval);
             s.push(cstackval);
@@ -1223,7 +1217,7 @@ inline void Array2D<T>::saveASCII ( const char *FileName ) const {
   for ( int i = 0; i < m; ++i ) {
     for ( int j = 0; j < n; ++j )
       file << get( i, j ) << " ";
-    file << endl;
+    file << std::endl;
   }
   file.close();
 }
