@@ -3,21 +3,21 @@
 #include "idarray3d.hpp"
 
 
-IDArray3D::IDArray3D(const int nn, const int _flag) :
+IDArray3D::IDArray3D(idx_t const nn, int const _flag) :
   Array3D<double>(nn),
   flag(_flag)
 {
   qe.assign(N, nullptr);
 }
 
-IDArray3D::IDArray3D(const int mm, const int nn, const int kk, const int _flag) :
+IDArray3D::IDArray3D(idx_t const mm, idx_t const nn, idx_t const kk, int const _flag) :
   Array3D<double>(mm,nn,kk),
   flag(_flag)
 {
   qe.assign(N, nullptr);
 }
 
-IDArray3D::IDArray3D(const Array3D<double> &input, const int _flag) :
+IDArray3D::IDArray3D(const Array3D<double> &input, int const _flag) :
   Array3D<double>(input,0),
   flag(_flag)
 {
@@ -44,10 +44,10 @@ double IDArray3D::interpolate(double x, double y, double z)
 
   if(flag == 2)
   {
-    int ii = static_cast<int>(round(y*static_cast<double>(m)));    // [0,m]
-    int jj = static_cast<int>(round(x*static_cast<double>(n)));    // [0,n] 
-    int kk = static_cast<int>(round(z*static_cast<double>(k)));    // [0,k] 
-    int idx = inrange(ii, int(m)) + inrange(jj, int(n))*m + inrange(kk, int(k))*m*n; // nearest grid point 
+    idx_t ii = static_cast<idx_t>(round(y*static_cast<double>(m)));    // [0,m]
+    idx_t jj = static_cast<idx_t>(round(x*static_cast<double>(n)));    // [0,n] 
+    idx_t kk = static_cast<idx_t>(round(z*static_cast<double>(k)));    // [0,k] 
+    idx_t idx = inrange(ii, m) + inrange(jj, n)*m + inrange(kk, k)*m*n; // nearest grid point 
 
     const double rx = x*static_cast<double>(n)-static_cast<double>(jj); // in range [-1/2,1/2], not scaled by dx -- cancels with terms in qe matrix   
     const double ry = y*static_cast<double>(m)-static_cast<double>(ii);

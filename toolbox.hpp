@@ -50,11 +50,8 @@ Array2D<double> makeCircle(const int n, const double r);
 Array2D<double> makeBox(const int n);
 double l2err(const Array2D<double> u, const Array2D<double> v);
 double normalize(double (&grad)[2]);
-double normalize(struct point &vec);
 inline double dist(const double *x1, const double *x2);
 inline double dist(const double *x1, const double *x2, const double lenx, const double leny);
-inline double dist(struct point x1, struct point x2);
-inline double dotProd(struct point x1, struct point x2);
 void ccomb(const double *x1, const double *x2, double *xr, double theta, const double xlen, const double ylen);
 
 void setStackSize(const int sizeInBytes);
@@ -65,14 +62,6 @@ inline double dist(const double *x1, const double *x2)
 
 inline double dist(const double *x1, const double *x2, const double lenx, const double leny)
 { return(sqrt(pdl(x1[0],x2[0],lenx)*pdl(x1[0],x2[0],lenx)+pdl(x1[1],x2[1],leny)*pdl(x1[1],x2[1],leny))); }
-
-inline double dist(struct point x1, struct point x2)
-{ return(sqrt(pd(x1.x,x2.x)*pd(x1.x,x2.x)+pd(x1.y,x2.y)*pd(x1.y,x2.y))); }
-
-inline double dotProd(struct point x1, struct point x2)
-{
-  return(x1.x*x2.x+x1.y*x2.y);
-}
 
 inline int maxInt()
 { return(INT_MAX); }

@@ -46,17 +46,4 @@
 #endif
 /*************************************************/
 
-struct point
-{
-  double x;
-  double y;
-};
-
-struct point3
-{
-  double x;
-  double y;
-  double z;
-};
-
 #endif

@@ -214,48 +214,6 @@ double normalize(double (&vec)[3])
   return(nrm);
 }
 
-double normalize(struct point3 &vec)
-{
-  double normsq = vec.x*vec.x+vec.y*vec.y+vec.z*vec.z;
-  const double nrm = sqrt(normsq);
-  if(normsq < 1e-14)
-    if(fabs(vec.x) > fabs(vec.y))
-    {
-      vec.y = 0.0f;
-      if(fabs(vec.x) > fabs(vec.z))
-      {
-        vec.x = mysign(vec.x);
-        vec.z = 0.0f;
-      }
-      else
-      {
-        vec.z = mysign(vec.z);
-        vec.x = 0.0f;
-      }
-    }
-    else
-    {
-      vec.x = 0.0f;
-      if(fabs(vec.y) > fabs(vec.z))
-      {
-        vec.y = mysign(vec.y);
-        vec.z = 0.0f;
-      }
-      else
-      {
-        vec.z = mysign(vec.z);
-        vec.y = 0.0f;
-      }
-    }
-  else
-  {
-    vec.x /= nrm;
-    vec.y /= nrm;
-    vec.z /= nrm;
-  }
-  return(nrm);
-}
-
 int minabs(const double *val, const int amt)
 { /* returns the index of the entry in val with smallest absolute value. Val
      assumed to contain amt entries valued < 1e-64 */

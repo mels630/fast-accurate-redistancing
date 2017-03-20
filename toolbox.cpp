@@ -475,28 +475,6 @@ double normalize(double (&grad)[2])
   return(sqrt(normsq));
 }
 
-double normalize(struct point &vec)
-{ 
-  double normsq = vec.x*vec.x+vec.y*vec.y;
-  if(normsq < 1e-14)
-    if(fabs(vec.x) > fabs(vec.y))
-    {
-      vec.x = mysign(vec.x);
-      vec.y = 0.0f;
-    }
-    else
-    {
-      vec.x = 0.0f;
-      vec.y = mysign(vec.y);
-    }
-  else
-  {
-    vec.x /= sqrt(normsq);
-    vec.y /= sqrt(normsq);
-  }
-  return(sqrt(normsq));
-}
-
 void ccomb(const double *x1, const double *x2, double *xr, double theta, const double xlen, const double ylen)
 { // forms convex combination xr = theta*x1 + (1-theta)*x2
   double diff[2];
