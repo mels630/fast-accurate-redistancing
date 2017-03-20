@@ -96,45 +96,35 @@ void IDArray2D::SetQe(idx_t const idx) const
   }
 }
 
-double IDArray2D::interpolate(double xx, double yy) const
-/*
-{
-  double x = xx-0.5f+dx;
-  double y = yy-0.5f+dy;
-  return(0.25 - sqrt(x*x+y*y));
-}
-*/
+double IDArray2D::interpolate(double x, double y) const
 {
   assert((flag==1) || (flag==2) || (flag==3));
-  double x = xx;
-  double y = yy;
-  if((mymin(x,y) < 0.0f) || (mymax(x,y) >= 1.0f))
-  {
+  if((x < 0.) || (x >= lenx()))
     x = dinrange2l(x,lenx());
+  if((y < 0.) || (y >= leny()))
     y = dinrange2l(y,leny());
-  }
 
   if(flag == 1)
   {
-    const idx_t ii = static_cast<idx_t>(floor(y*static_cast<double>(m)));
-    const idx_t jj = static_cast<idx_t>(floor(x*static_cast<double>(n)));
-    const idx_t idx = inrange(ii,m) + inrange(jj,n)*m;
+    idx_t const ii = static_cast<idx_t>(floor(y*static_cast<double>(m)));
+    idx_t const jj = static_cast<idx_t>(floor(x*static_cast<double>(n)));
+    idx_t const idx = inrange(ii,m) + inrange(jj,n)*m;
 
     if (qe[idx] == nullptr)
       SetQe(idx);
-    const double rx = x*static_cast<double>(n)-static_cast<double>(jj); // in range [-1/2,1/2], not scaled by dx -- cancels with terms in qe matrix   
-    const double ry = y*static_cast<double>(m)-static_cast<double>(ii);
-    const double xi1 = qe[idx][0]*(1.0-rx) + qe[idx][2]*rx;
-    const double xi2 = qe[idx][1]*(1.0-rx) + qe[idx][3]*rx;
+    double const rx = x*static_cast<double>(n)-static_cast<double>(jj); // in range [-1/2,1/2], not scaled by dx -- cancels with terms in qe matrix   
+    double const ry = y*static_cast<double>(m)-static_cast<double>(ii);
+    double const xi1 = qe[idx][0]*(1.0-rx) + qe[idx][2]*rx;
+    double const xi2 = qe[idx][1]*(1.0-rx) + qe[idx][3]*rx;
     return(xi1*(1.0-ry) + xi2*ry);
   }
   else if(flag == 2)
   {
-    idx_t ii = static_cast<idx_t>(round(y/dy));    // [0,m]
-    idx_t jj = static_cast<idx_t>(round(x/dx));    // [0,n] 
-    idx_t idx = inrange(ii,m) + inrange(jj,n)*m;                     // nearest grid point 
-    double rx = x/dx-static_cast<double>(jj);; // in range [-1/2,1/2], not scaled by dx -- cancels with terms in qe matrix 
-    double ry = y/dy-static_cast<double>(ii);  // note: this relies on ii being able to take values 0 OR m and only being cast into range for idx 
+    idx_t const ii = static_cast<idx_t>(round(y/dy));    // [0,m]
+    idx_t const jj = static_cast<idx_t>(round(x/dx));    // [0,n] 
+    idx_t const idx = inrange(ii,m) + inrange(jj,n)*m;                     // nearest grid point 
+    double const rx = x/dx-static_cast<double>(jj);; // in range [-1/2,1/2], not scaled by dx -- cancels with terms in qe matrix 
+    double const ry = y/dy-static_cast<double>(ii);  // note: this relies on ii being able to take values 0 OR m and only being cast into range for idx 
     if (qe[idx] == nullptr)
       SetQe(idx);
     return( qe[idx][0]*rx*rx*ry*ry + qe[idx][1]*rx*rx*ry + qe[idx][2]*rx*rx+
@@ -143,51 +133,38 @@ double IDArray2D::interpolate(double xx, double yy) const
   }
   else // flag == 3
   {
-    idx_t ii = static_cast<idx_t>(floor(y/dy)); 
-    idx_t jj = static_cast<idx_t>(floor(x/dx));
-    //if((fabs(x-0.734375) < 1.e-3) && (fabs(y-1.093750) < 1.e-3))
-    //  mexPrintf(" x = %f, y = %f, dx = %f, dy = %f, ii = %d, jj = %d\n",x,y,dx,dy,ii,jj);
-
-    idx_t idx = inrange(ii,m) + inrange(jj,n)*m;                      // nearest grid point 
-    double rx = (x/dx-static_cast<double>(jj)); // in range (-1,1), not scaled by dx/dy (picked up in coefficients) 
-    double rx2 = rx*rx; double rx3 = rx2*rx;
-    double ry = (y/dy-static_cast<double>(ii)); // in range (-1,1), not scaled by dx/dy (picked up in coefficients) 
-    double ry2 = ry*ry; double ry3 = ry2*ry;
+    idx_t const ii = static_cast<idx_t>(floor(y/dy)); 
+    idx_t const jj = static_cast<idx_t>(floor(x/dx));
+    idx_t const idx = inrange(ii,m) + inrange(jj,n)*m;                      // nearest grid point 
+    double const rx = (x/dx-static_cast<double>(jj)); // in range (-1,1), not scaled by dx/dy (picked up in coefficients) 
+    double const rx2 = rx*rx;
+    double const rx3 = rx2*rx;
+    double const ry = (y/dy-static_cast<double>(ii)); // in range (-1,1), not scaled by dx/dy (picked up in coefficients) 
+    double const ry2 = ry*ry;
+    double const ry3 = ry2*ry;
     if (qe[idx] == nullptr)
       SetQe(idx);
     return ((qe[idx][0]+qe[idx][1]*ry+qe[idx][2]*ry2+qe[idx][3]*ry3)+rx*(qe[idx][4]+qe[idx][5]*ry+qe[idx][6]*ry2+qe[idx][7]*ry3)+rx2*(qe[idx][8]+qe[idx][9]*ry+qe[idx][10]*ry2+qe[idx][11]*ry3)+rx3*(qe[idx][12]+qe[idx][13]*ry+qe[idx][14]*ry2+qe[idx][15]*ry3));
   }
 }
 
-void IDArray2D::interpolate(double xx, double yy, double(&result)[3]) const // returns interpolated value of data(x,y) in result[0] and gradient of data(x,y) in result[1:2]
-/*
-{ // d = 0.25 - sqrt(x^2 + y^2)
-  double x = xx-0.5f+dx;
-  double y = yy-0.5f+dy;
-  result[0] = 0.25 - sqrt(x*x+y*y);
-  result[1] = -x/sqrt(x*x+y*y);
-  result[2] = -y/sqrt(x*x+y*y);
-}
-*/
+void IDArray2D::interpolate(double x, double y, double(&result)[3]) const // returns interpolated value of data(x,y) in result[0] and gradient of data(x,y) in result[1:2]
 {
   assert((flag==2) || (flag==3));
-  double x = xx;
-  double y = yy;
-  if((mymin(x,y) < 0.0f) || (mymax(x,y) >= 1.0f))
-  {
+  if((x < 0.) || (x >= lenx()))
     x = dinrange2l(x,lenx());
+  if((y < 0.) || (y >= leny()))
     y = dinrange2l(y,leny());
-  }
 
   if(flag == 2)
   {
-    const idx_t ii = static_cast<idx_t>(round(y/dy));    // [0,m]
-    const idx_t jj = static_cast<idx_t>(round(x/dx));    // [0,n] 
-    const idx_t idx = inrange(ii,m) + inrange(jj,n)*m;                     // nearest grid point 
-    const double rx = x/dx-static_cast<double>(jj);; // in range [-1/2,1/2], not scaled by dx -- cancels with terms in qe matrix 
-    const double ry = y/dy-static_cast<double>(ii);  // note: this relies on ii being able to take values 0 OR m and only being cast into range for idx 
-    const double rx2 = rx*rx;
-    const double ry2 = ry*ry;
+    idx_t const ii = static_cast<idx_t>(round(y/dy));    // [0,m]
+    idx_t const jj = static_cast<idx_t>(round(x/dx));    // [0,n] 
+    idx_t const idx = inrange(ii,m) + inrange(jj,n)*m;                     // nearest grid point 
+    double const rx = x/dx-static_cast<double>(jj);; // in range [-1/2,1/2], not scaled by dx -- cancels with terms in qe matrix 
+    double const ry = y/dy-static_cast<double>(ii);  // note: this relies on ii being able to take values 0 OR m and only being cast into range for idx 
+    double const rx2 = rx*rx;
+    double const ry2 = ry*ry;
     if (qe[idx] == nullptr)
       SetQe(idx);
 
@@ -203,13 +180,13 @@ void IDArray2D::interpolate(double xx, double yy, double(&result)[3]) const // r
   }
   else // flag == 3
   {
-    const idx_t ii = static_cast<idx_t>(floor(y*static_cast<double>(m))); 
-    const idx_t jj = static_cast<idx_t>(floor(x*static_cast<double>(n)));
-    const idx_t idx = inrange(ii,m) + inrange(jj,n)*m;                      // nearest grid point 
-    const double rx = (x*static_cast<double>(n)-static_cast<double>(jj)); // in range (-1,1), not scaled by dx/dy (picked up in coefficients) 
-    const double rx2 = rx*rx; const double rx3 = rx2*rx;
-    const double ry = (y*static_cast<double>(m)-static_cast<double>(ii)); // in range (-1,1), not scaled by dx/dy (picked up in coefficients) 
-    const double ry2 = ry*ry; const double ry3 = ry2*ry;
+    idx_t const ii = static_cast<idx_t>(floor(y*static_cast<double>(m))); 
+    idx_t const jj = static_cast<idx_t>(floor(x*static_cast<double>(n)));
+    idx_t const idx = inrange(ii,m) + inrange(jj,n)*m;                      // nearest grid point 
+    double const rx = (x*static_cast<double>(n)-static_cast<double>(jj)); // in range (-1,1), not scaled by dx/dy (picked up in coefficients) 
+    double const rx2 = rx*rx; double const rx3 = rx2*rx;
+    double const ry = (y*static_cast<double>(m)-static_cast<double>(ii)); // in range (-1,1), not scaled by dx/dy (picked up in coefficients) 
+    double const ry2 = ry*ry; double const ry3 = ry2*ry;
     if (qe[idx] == nullptr)
       SetQe(idx);
     result[0] = ((qe[idx][0]+qe[idx][1]*ry+qe[idx][2]*ry2+qe[idx][3]*ry3)+rx*(qe[idx][4]+qe[idx][5]*ry+qe[idx][6]*ry2+qe[idx][7]*ry3)+rx2*(qe[idx][8]+qe[idx][9]*ry+qe[idx][10]*ry2+qe[idx][11]*ry3)+rx3*(qe[idx][12]+qe[idx][13]*ry+qe[idx][14]*ry2+qe[idx][15]*ry3));
