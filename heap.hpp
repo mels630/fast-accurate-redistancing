@@ -25,6 +25,7 @@ using std::vector;
 using std::cout;
 using std::endl;
 
+/// Much better to use the built-in priority queue, but we retain our own implementation a sorted heap here for posterity.
 class Heap
 {
 private:
