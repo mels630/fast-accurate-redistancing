@@ -1,49 +1,35 @@
 #include "idarray2d.hpp"
 
-IDArray2D::IDArray2D(const int nn, const int _flag) :
-  Array2D<double>(nn),
-  flag(_flag)
-{
-  qe.resize(N);
-  for(idx_t ii=0; ii<N; ++ii)
-    qe[ii] = static_cast<double*>(NULL);
-}
+IDArray2D::IDArray2D(int const nn, int const _flag) :
+  IDArray2D(nn, nn, _flag)
+{ }
 
-IDArray2D::IDArray2D(const int mm, const int nn, const int _flag) :
-  Array2D<double>(mm,nn),
-  flag(_flag)
-{
-  qe.resize(N);
-  for(idx_t ii=0; ii<N; ++ii)
-    qe[ii] = static_cast<double*>(NULL);
-}
+IDArray2D::IDArray2D(int const mm, int const nn, int const _flag) :
+  IDArray2D(mm, nn, 1./static_cast<double>(nn), 1./static_cast<double>(mm), _flag)
+{ }
 
-IDArray2D::IDArray2D(const int mm, const int nn, const double _dx, const double _dy, const int _flag) :
+IDArray2D::IDArray2D(int const mm, int const nn, double const _dx, double const _dy, int const _flag) :
   Array2D<double>(mm,nn,_dx,_dy),
   flag(_flag)
 {
-  qe.resize(N);
-  for(idx_t ii=0; ii<N; ++ii)
-    qe[ii] = static_cast<double*>(NULL);
+  qe.assign(N, nullptr);
 }
 
-IDArray2D::IDArray2D(const Array2D<double> &input, const int _flag) :
+IDArray2D::IDArray2D(const Array2D<double> &input, int const _flag) :
   Array2D<double>(input,0),
   flag(_flag)
 {
   qe.resize(N);
   for(idx_t ii=0; ii<N; ++ii)
-    qe[ii] = static_cast<double*>(NULL);
+    qe[ii] = static_cast<double*>(nullptr);
 }
 
 IDArray2D::~IDArray2D()
 {
-  for(idx_t ii=0; ii<N; ++ii)
-    if(qe[ii] != NULL)
-      delete [] qe[ii];
+  freeQeIdxAll();
 }
 
-double IDArray2D::interpolate(const double xx, const double yy) const
+double IDArray2D::interpolate(double xx, double yy) const
 /*
 {
   double x = xx-0.5f+dx;
@@ -167,7 +153,7 @@ double IDArray2D::interpolate(const double xx, const double yy) const
   }
 }
 
-void IDArray2D::interpolate(const double xx, const double yy, double(&result)[3]) const // returns interpolated value of data(x,y) in result[0] and gradient of data(x,y) in result[1:2]
+void IDArray2D::interpolate(double xx, double yy, double(&result)[3]) const // returns interpolated value of data(x,y) in result[0] and gradient of data(x,y) in result[1:2]
 /*
 { // d = 0.25 - sqrt(x^2 + y^2)
   double x = xx-0.5f+dx;
@@ -284,17 +270,11 @@ void IDArray2D::interpolate(const double xx, const double yy, double(&result)[3]
   }
 }
 
-void IDArray2D::freeQeIdx(const int idx) const
-{ // clear the interpolation coefficients at idx
-  if(qe[idx] != NULL)
-  {
-    delete [] qe[idx];
-    qe[idx] = NULL;
-  }
-}
-
 void IDArray2D::freeQeIdxAll() const
 { // clear all the interpolation coefficients
-  for(idx_t idx=0; idx<N; ++idx)
-    freeQeIdx(idx);
+  for (auto &elt : qe)
+    if (elt != nullptr) {
+      delete [] elt;
+      elt = nullptr;
+    }
 }
