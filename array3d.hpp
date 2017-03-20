@@ -45,7 +45,6 @@ public:
   Array3D<T>(const Array3D<T> &Input); 
   inline T get(const size_t idx) const;
   inline T get(const size_t ii, const size_t jj, const size_t kk) const;
-  inline bool onBndry(const size_t idx) const;
   inline size_t getm() const;
   inline size_t getn() const;
   inline size_t getk() const;
@@ -266,12 +265,6 @@ template <typename T>
 inline T Array3D<T>::get(const size_t ii, const size_t jj, const size_t kk) const
 {
   return(data[sub2ind(ii,jj,kk)]);
-}
-
-template <typename T>
-inline bool Array3D<T>::onBndry(const size_t idx) const
-{ // assumes input Array3D is a sign array, e.g. \pm 1, 0 are only values contained
-  return((abs(getxp(idx)-get(idx)) + abs(getxm(idx)-get(idx)) + abs(getyp(idx)-get(idx)) + abs(getym(idx)-get(idx)) + abs(getzp(idx)-get(idx)) + abs(getzm(idx)-get(idx))) > 0);
 }
 
 template <typename T>

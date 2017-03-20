@@ -21,17 +21,18 @@
 
 using idx_t = std::size_t;
 
+/// Array2D: template class for two-dimensional arrays with fixed spacing.
 template <typename T> 
 class Array2D
 {
 
 protected:
-  std::vector<T> data; // contains (m x n) = N elements of type T
-  idx_t const m;       // number of elements in the y-direction
-  idx_t const n;       // number of elements in the x-direction
-  idx_t const N;       // total number of elements
-  double const dx;     // grid spacing in x
-  double const dy;     // grid spacing in y
+  std::vector<T> data; ///< contains (m x n) = N elements of type T
+  idx_t const m;       ///< number of elements in the y-direction
+  idx_t const n;       ///< number of elements in the x-direction
+  idx_t const N;       ///< total number of elements
+  double const dx;     ///< grid spacing in x
+  double const dy;     ///< grid spacing in y
 
   inline idx_t sub2ind(idx_t const ii, idx_t const jj) const;
   void transposeData();
@@ -51,7 +52,6 @@ public:
   Array2D<T>(Array2D<T> const &Input); 
   inline T get(idx_t const idx) const;
   inline T get(idx_t const ii, idx_t const jj) const;
-  inline bool onBndry(idx_t const idx) const;
   inline idx_t getm() const;
   inline idx_t getn() const;
   inline idx_t getN() const;
@@ -130,6 +130,12 @@ public:
   inline void loadASCII ( const char *FileName );
 };
 
+/// Full constructor
+/// \param[in] indata : Pointer to array of input data (to copy). Assumed to contain (mm x nn) elements.
+/// \param[in] mm     : Number of elements per row
+/// \param[in] nn     : Number of elements per column  
+/// \param[in] _dx    : Element spacing in x
+/// \param[in] _dy    : Element spacing in y
 template <typename T>
 Array2D<T>::Array2D(T* const indata, idx_t const mm, idx_t const nn, double const _dx, double const _dy) :
   m(mm),
@@ -149,26 +155,43 @@ Array2D<T>::Array2D(T* const indata, idx_t const mm, idx_t const nn, double cons
     data.assign(N, T(0));
 }
 
+/// Constructor
+/// \param[in] nn : Number of elements per row and per column
 template <typename T> 
 Array2D<T>::Array2D(idx_t const nn) :
   Array2D(nullptr, nn, nn)
 { }
 
+/// Constructor
+/// \param[in] mm : Number of elements per row
+/// \param[in] nn : Number of elements per column
 template <typename T> 
 Array2D<T>::Array2D(idx_t const mm, idx_t const nn) :
   Array2D(nullptr, mm, nn)
 { }
 
+/// Constructor
+/// \param[in] indata : Pointer to array of input data (to copy). Assumed to contain (mm x nn) elements.
+/// \param[in] mm     : Number of elements per row
+/// \param[in] nn     : Number of elements per column  
 template <typename T>
 Array2D<T>::Array2D(T* const indata, idx_t const mm, idx_t const nn) :
   Array2D(indata, mm, nn, 1./static_cast<double>(nn), 1./static_cast<double>(mm))
 { }
 
+/// Constructor
+/// \param[in] mm     : Number of elements per row
+/// \param[in] nn     : Number of elements per column  
+/// \param[in] _dx    : Element spacing in x
+/// \param[in] _dy    : Element spacing in y
 template <typename T> 
 Array2D<T>::Array2D(idx_t const mm, idx_t const nn, double const _dx, double const _dy) :
   Array2D(nullptr, mm, nn, _dx, _dy)
 { }
 
+/// Copy constructor, deep or structure
+/// \param[in] Input    : Array2D<T> object to copy
+/// \param[in] CopyFlag : Deep copy if 0, structure copy otherwise
 template <typename T>
 Array2D<T>::Array2D(Array2D<T> const &Input, int const CopyFlag) :
   Array2D(Input.m, Input.n, Input.dx, Input.dy)
@@ -178,11 +201,17 @@ Array2D<T>::Array2D(Array2D<T> const &Input, int const CopyFlag) :
   // else if (CopyFlag == 1) // structure copy, done by call to Array2D constructor
 }
 
+/// Copy constructor
+/// \param[in] Input    : Array2D<T> object to copy
 template <typename T>
 Array2D<T>::Array2D(Array2D<T> const &Input) :
   Array2D(Input, 0) // default to deep copy
 { } 
 
+/// Convert (ii,jj) row-column index to flat index.
+/// \param[in] ii : row index
+/// \param[in] jj : column index
+/// \return         flat index
 template <typename T>
 inline idx_t Array2D<T>::sub2ind(idx_t const ii, idx_t const jj) const
 {
@@ -286,22 +315,23 @@ inline idx_t Array2D<T>::size() const
   return(N);
 }
 
+/// Flat-index getter
+/// \param[in] idx : Flat index to get array value at
+/// \return          Value of array at idx
 template <typename T>
 inline T Array2D<T>::get(idx_t const idx) const
 {
   return(data[idx]);
 }
 
+/// 2D-index getter
+/// \param[in] ii : Row index to get array value at
+/// \param[in] jj : Column index to get array value at
+/// \return         Value of array at idx
 template <typename T>
 inline T Array2D<T>::get(idx_t const ii, idx_t const jj) const
 {
   return(data[sub2ind(ii,jj)]);
-}
-
-template <typename T>
-inline bool Array2D<T>::onBndry(idx_t const idx) const
-{ // assumes input Array2D is a sign array, e.g. \pm 1, 0 are only values contained
-  return((abs(getxp(idx)-get(idx)) + abs(getxm(idx)-get(idx)) + abs(getyp(idx)-get(idx)) + abs(getym(idx)-get(idx))) > 0);
 }
 
 template <typename T>

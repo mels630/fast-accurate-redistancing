@@ -22,17 +22,6 @@ using std::ifstream;
 using std::ofstream;
 using std::vector;
 
-// Struct definitions
-#ifndef _HEAPSTRUCT_
-#define _HEAPSTRUCT_
-struct helt
-{
-  int i;
-  double d;
-  double aux[2];
-};
-#endif
-
 void fillSign(Array3D<double> &u, const double nullval, const double newval);
 void fillSignSubfn(Array3D<double> &u, const double nullval, vector<int> &list, const int curr, const double newval, const double TOL);
 double l2err(const Array3D<double> u, const Array3D<double> v);
