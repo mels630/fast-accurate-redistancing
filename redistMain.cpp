@@ -54,7 +54,7 @@ int main(int argc, char **argv)
     // Perform the redistancing
     Redist r(u0,width,flag);
     r.redistance();
-    cout << endl << "Calculated L2-error is " << l2err(r.dump_u(),u0) << endl;  
+    cout << endl << "Calculated L2-error is " << l2err(r.dump_u(), u0) << endl;  
   }
   else if(d == 3)
   {
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     // Perform the redistancing
     Redist3 r(u,width,flag);
     r.redistance();
-    cout << endl << "Calculated L2-error is " << l2err(r.u,r.u0) << endl;  
+    cout << endl << "Calculated L2-error is " << l2err(r.u, r.u0) << endl;  
   }
   else
     cout << "d must be 2 or 3." << endl;

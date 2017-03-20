@@ -56,6 +56,7 @@ public:
   void put(T const value, idx_t const ii, idx_t const jj);
   void putadd(T const value, idx_t const idx);
   void putadd(T const value, idx_t const ii, idx_t const jj);
+
   T maxval() const;
   T minval() const;
   T minabsval() const;

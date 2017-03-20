@@ -1,79 +1,23 @@
+#include <algorithm>
+#include <functional>
+#include "defs.h"
+
 #include "toolbox3d.hpp"
 
-void fillSign(Array3D<double> &u, const double nullval, const double newval)
+double l2err(Array3D<double> const &u, Array3D<double> const &v)
 {
-  const double TOL = 0.0000000001;
-  size_t curr = 0;
-  vector<int> ind;
-  ind.reserve(u.getN());
-
-  for(size_t ii=0; ii<u.getN(); ++ii)
-    if(fabs(u.get(ii)-nullval) > TOL)
-      ind.push_back(ii);
-
-  // Fill in everywhere that u == nullval with the appropriate signed value
-  // Loop over the set values of u until the end of the list ind is reached
-
-  while(curr < ind.size())
-  {
-    fillSignSubfn(u,nullval,ind,curr,newval,TOL);
-    curr++;
-  }
-}
-
-void fillSignSubfn(Array3D<double> &u, const double nullval, vector<int> &list, const int curr, const double newval, const double TOL)
-{
-  if(fabs(u.getxp(list[curr]) - nullval) < TOL)
-  { 
-    u.put(newval * (double)mysign(u.get(list[curr])), u.xp(list[curr]));
-    list.push_back(u.xp(list[curr]));
-  }
-  if(fabs(u.getxm(list[curr]) - nullval) < TOL)
-  {  
-    u.put(newval * (double)mysign(u.get(list[curr])), u.xm(list[curr]));
-    list.push_back(u.xm(list[curr]));
-  }
-  if(fabs(u.getyp(list[curr]) - nullval) < TOL)
-  {  
-    u.put(newval * (double)mysign(u.get(list[curr])), u.yp(list[curr]));
-    list.push_back(u.yp(list[curr]));
-  }
-  if(fabs(u.getym(list[curr]) - nullval) < TOL)
-  {  
-    u.put(newval * (double)mysign(u.get(list[curr])), u.ym(list[curr]));
-    list.push_back(u.ym(list[curr]));
-  }
-  if(fabs(u.getzp(list[curr]) - nullval) < TOL)
-  {  
-    u.put(newval * (double)mysign(u.get(list[curr])), u.zp(list[curr]));
-    list.push_back(u.zp(list[curr]));
-  }
-  if(fabs(u.getzm(list[curr]) - nullval) < TOL)
-  {  
-    u.put(newval * (double)mysign(u.get(list[curr])), u.zm(list[curr]));
-    list.push_back(u.zm(list[curr]));
-  }
-}
-
-double l2err(const Array3D<double> u, const Array3D<double> v)
-{
-  if((u.getn() != v.getn()) || (u.getm() != v.getn()) || (u.getk() != v.getk()))
+  if((u.getn() != v.getn()) || (u.getm() != v.getm()) || (u.getk() != v.getk()))
     return(-1.0f);
-  const double dv = 1.0f / static_cast<double>(u.getN());
-  double err = 0.0f;
-  for(size_t ii=0; ii<u.getN(); ++ii)
-    err += (v.get(ii)-u.get(ii))*(v.get(ii)-u.get(ii));
-  return(sqrt(err*dv));
+  double const err = std::inner_product(u.returnData().begin(), u.returnData().end(), v.returnData().begin(), 0.,
+                                        std::plus<double>(), [](double const &d1, double const &d2)->double{return (d1-d2)*(d1-d2); });
+  return std::sqrt(err / static_cast<double>(u.getN()));
 }
 
 void ccomb(const double (&x1)[3], const double (&x2)[3], double (&xr)[3], double theta)
 { // forms convex combination xr = theta*x1 + (1-theta)*x2
   double diff[3];
   if(theta < 0.0f || theta > 1.0f || std::isnan(theta))
-  {
-    cout << "theta = " << theta << endl;
-    //abort();
-  }
+    abort();
   if(std::isnan(theta))
     theta = 0.5f;
 
@@ -83,18 +27,13 @@ void ccomb(const double (&x1)[3], const double (&x2)[3], double (&xr)[3], double
   xr[0] = x1[0] + (1.0f-theta)*diff[0];
   xr[1] = x1[1] + (1.0f-theta)*diff[1];
   xr[2] = x1[2] + (1.0f-theta)*diff[2];
-
-  //printf(" theta = %.3e, xr = (%f,%f).\n",theta,xr[0],xr[1]); fflush(stdout);
 }
 
 void ccomb(const double (&x1)[4], const double (&x2)[4], double (&xr)[3], double theta)
 { // forms convex combination xr = theta*x1 + (1-theta)*x2. Ignores third value in x1/x2
   double diff[3];
   if(theta < 0.0f || theta > 1.0f || std::isnan(theta))
-  {
-    cout << "theta = " << theta << endl;
-    //abort();
-  }
+    abort();
   if(std::isnan(theta))
     theta = 0.5f;
 
@@ -232,3 +171,7 @@ int minabs(const double *val, const int amt)
     }
   return(ind);
 }
+
+double dist3(const double *x1, const double *x2)
+{ return(sqrt(pd(x1[0],x2[0])*pd(x1[0],x2[0])+pd(x1[1],x2[1])*pd(x1[1],x2[1])+pd(x1[2],x2[2])*pd(x1[2],x2[2]))); }
+

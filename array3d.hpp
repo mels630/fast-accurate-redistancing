@@ -60,7 +60,7 @@ public:
   void fillWithValue(const T value);
   T sixNborMin(const idx_t idx) const;
   T sixNborMax(const idx_t idx) const;
-  std::vector<T> returnData() const;
+  std::vector<T> const &returnData() const;
   double getX(const idx_t idx) const;
   double getY(const idx_t idx) const;
   double getZ(const idx_t idx) const;
@@ -392,8 +392,8 @@ T Array3D<T>::sixNborMax(const idx_t idx) const
 }
 
 template <typename T>
-std::vector<T> Array3D<T>::returnData() const
-{ // returns a copy of the data vector
+std::vector<T> const &Array3D<T>::returnData() const
+{ // returns a const ref to data
   return(data);
 }
 
