@@ -1,4 +1,7 @@
+#include <iostream>
+
 #include "idarray3d.hpp"
+
 
 IDArray3D::IDArray3D(const int nn, const int _flag) :
   Array3D<double>(nn),
@@ -160,7 +163,7 @@ double IDArray3D::interpolate(double x, double y, double z)
   }
   else // flag == 3
   {
-    cout << "Tricubic interpolation is not yet implemented. Care to have a go? ... Aborting." << endl;
+    std::cout << "Tricubic interpolation is not yet implemented. Care to have a go? ... Aborting." << std::endl;
     abort();
   }
 }

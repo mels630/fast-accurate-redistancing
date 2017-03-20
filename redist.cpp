@@ -30,8 +30,8 @@ Redist::Redist(const Array2D<double> &_u, const double _dx, const double _dy, co
   cpflag((_flag==2) || (_flag==3)),
   h(10*width,cpflag),
   state(m,n),
-  u0(_u.duplicateArray2D(),_flag),   // should be more careful in memory
-  u(_u.duplicateArray2D()),           // at some point!!!
+  u0(_u,_flag),
+  u(_u),
   cpx(m,n),
   cpy(m,n)
 { }

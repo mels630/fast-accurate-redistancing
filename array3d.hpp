@@ -3,112 +3,98 @@
 
 #include<vector>
 #include<cstdlib>
-#include<iostream>
 #include<fstream>
 #include<cmath>
-#include<string>
-#include<stack>
 #include "defs.h"
 #include<cassert>
 
-using std::vector;
-using std::cout;
-using std::endl;
-using std::string;
-using std::ofstream;
-using std::stack;
+using idx_t = std::size_t;
 
 template <typename T> 
 class Array3D
 {
-
 protected:
-  vector<T> data; // contains (m x n x p) = N elements of type T
-  const size_t m;          // number of elements in the y-direction
-  const size_t n;          // number of elements in the x-direction
-  const size_t k;          // number of elements in the z-direction
-  const size_t N;          // total number of elements
+  std::vector<T> data; // contains (m x n x p) = N elements of type T
+  const idx_t m;          // number of elements in the y-direction
+  const idx_t n;          // number of elements in the x-direction
+  const idx_t k;          // number of elements in the z-direction
+  const idx_t N;          // total number of elements
   const double dx;         // grid spacing in x
   const double dy;         // grid spacing in y
   const double dz;         // grid spacing in z
   explicit Array3D<T>(); // don't use empty constructor
 
-  inline size_t sub2ind(const size_t ii, const size_t jj, const size_t kk) const;
+  idx_t sub2ind(const idx_t ii, const idx_t jj, const idx_t kk) const;
 
 public: 
-  explicit Array3D<T>(const size_t nn);
-  explicit Array3D<T>(const size_t mm, const size_t nn, const size_t kk);
-  explicit Array3D<T>(const T* indata, const size_t mm, const size_t nn, const size_t kk);
-  explicit Array3D<T>(const size_t mm, const size_t nn, const size_t kk, const double _dx, const double _dy, const double _dz);
-  explicit Array3D<T>(const T* indata, const size_t mm, const size_t nn, const size_t kk, const double _dx, const double _dy, const double _dz);
+  explicit Array3D<T>(const idx_t nn);
+  explicit Array3D<T>(const idx_t mm, const idx_t nn, const idx_t kk);
+  explicit Array3D<T>(const T* indata, const idx_t mm, const idx_t nn, const idx_t kk);
+  explicit Array3D<T>(const idx_t mm, const idx_t nn, const idx_t kk, const double _dx, const double _dy, const double _dz);
+  explicit Array3D<T>(const T* indata, const idx_t mm, const idx_t nn, const idx_t kk, const double _dx, const double _dy, const double _dz);
   explicit Array3D<T>(const Array3D<T> &Input, const int CopyFlag);
   Array3D<T>(const Array3D<T> &Input); 
-  inline T get(const size_t idx) const;
-  inline T get(const size_t ii, const size_t jj, const size_t kk) const;
-  inline size_t getm() const;
-  inline size_t getn() const;
-  inline size_t getk() const;
-  inline size_t getN() const;
-  inline double getdx() const;
-  inline double getdy() const;
-  inline double getdz() const;
-  inline double lenx() const;
-  inline double leny() const;
-  inline double lenz() const;
-  inline size_t size() const;
-  inline void put(const T value, const size_t idx);
-  inline void put(const T value, const size_t ii, const size_t jj, const size_t kk);
-  inline void putadd(const T value, const size_t idx);
-  inline void putadd(const T value, const size_t ii, const size_t jj, const size_t kk);
-  void copyData(const Array3D<T> &input);
+  T get(const idx_t idx) const;
+  T get(const idx_t ii, const idx_t jj, const idx_t kk) const;
+  idx_t getm() const;
+  idx_t getn() const;
+  idx_t getk() const;
+  idx_t getN() const;
+  double getdx() const;
+  double getdy() const;
+  double getdz() const;
+  double lenx() const;
+  double leny() const;
+  double lenz() const;
+  idx_t size() const;
+  void put(const T value, const idx_t idx);
+  void put(const T value, const idx_t ii, const idx_t jj, const idx_t kk);
+  void putadd(const T value, const idx_t idx);
+  void putadd(const T value, const idx_t ii, const idx_t jj, const idx_t kk);
 
-  inline T maxval() const;
-  inline T minval() const;
-  inline T minabsval() const;
-  inline T maxabsval() const;
-  inline T sum() const;
-  inline void fillWithValue(const T value);
-  inline T sixNborMin(const size_t idx) const;
-  inline T sixNborMax(const size_t idx) const;
-  T* dataAddress();
-  vector<T> returnData() const;
-  T* returnDataArray() const;
-  Array3D<T> duplicateArray3D() const;
-  inline double getX(const size_t idx) const;
-  inline double getY(const size_t idx) const;
-  inline double getZ(const size_t idx) const;
-  inline size_t getXidx(const size_t idx) const;
-  inline size_t getYidx(const size_t idx) const;
-  inline size_t getZidx(const size_t idx) const;
-  inline size_t xp(const size_t idx) const;
-  inline size_t xm(const size_t idx) const;
-  inline size_t yp(const size_t idx) const;
-  inline size_t ym(const size_t idx) const;
-  inline size_t zp(const size_t idx) const;
-  inline size_t zm(const size_t idx) const;
-  inline T getxp(const size_t idx) const;
-  inline T getxm(const size_t idx) const;
-  inline T getyp(const size_t idx) const;
-  inline T getym(const size_t idx) const;
-  inline T getzp(const size_t idx) const;
-  inline T getzm(const size_t idx) const;
+  T maxval() const;
+  T minval() const;
+  T minabsval() const;
+  T maxabsval() const;
+  T sum() const;
+  void fillWithValue(const T value);
+  T sixNborMin(const idx_t idx) const;
+  T sixNborMax(const idx_t idx) const;
+  std::vector<T> returnData() const;
+  double getX(const idx_t idx) const;
+  double getY(const idx_t idx) const;
+  double getZ(const idx_t idx) const;
+  idx_t getXidx(const idx_t idx) const;
+  idx_t getYidx(const idx_t idx) const;
+  idx_t getZidx(const idx_t idx) const;
+  idx_t xp(const idx_t idx) const;
+  idx_t xm(const idx_t idx) const;
+  idx_t yp(const idx_t idx) const;
+  idx_t ym(const idx_t idx) const;
+  idx_t zp(const idx_t idx) const;
+  idx_t zm(const idx_t idx) const;
+  T getxp(const idx_t idx) const;
+  T getxm(const idx_t idx) const;
+  T getyp(const idx_t idx) const;
+  T getym(const idx_t idx) const;
+  T getzp(const idx_t idx) const;
+  T getzm(const idx_t idx) const;
 
-  size_t countVal(const T value) const;
+  idx_t countVal(const T value) const;
 
   // algebraic operations
-  inline T& operator[] ( size_t I );
-  inline const T& operator[] ( size_t I ) const;
-  inline Array3D<T>& operator= ( const Array3D<T>& Vec );
-  inline Array3D<T>& operator*= ( const T Value );
-  inline Array3D<T>& operator/= ( const T Value );
-  inline Array3D<T>& operator+= ( const Array3D<T> &Vec );
-  inline Array3D<T>& operator-= ( const Array3D<T> &Vec );
-  inline void setAll( const T val );
-  inline void addMultiple ( const Array3D<T>& Vec, T Factor );
+  T& operator[] ( idx_t I );
+  const T& operator[] ( idx_t I ) const;
+  Array3D<T>& operator= ( const Array3D<T>& Vec );
+  Array3D<T>& operator*= ( const T Value );
+  Array3D<T>& operator/= ( const T Value );
+  Array3D<T>& operator+= ( const Array3D<T> &Vec );
+  Array3D<T>& operator-= ( const Array3D<T> &Vec );
+  void addMultiple ( const Array3D<T>& Vec, T Factor );
 };
 
 template <typename T> 
-Array3D<T>::Array3D(const size_t nn) :
+Array3D<T>::Array3D(const idx_t nn) :
   m(nn),
   n(nn),
   k(nn),
@@ -122,7 +108,7 @@ Array3D<T>::Array3D(const size_t nn) :
 }
 
 template <typename T> 
-Array3D<T>::Array3D(const size_t mm, const size_t nn, const size_t kk) :
+Array3D<T>::Array3D(const idx_t mm, const idx_t nn, const idx_t kk) :
   m(mm),
   n(nn),
   k(kk),
@@ -138,7 +124,7 @@ Array3D<T>::Array3D(const size_t mm, const size_t nn, const size_t kk) :
 }
 
 template <typename T>
-Array3D<T>::Array3D(const T* indata, const size_t mm, const size_t nn, const size_t kk) :
+Array3D<T>::Array3D(const T* indata, const idx_t mm, const idx_t nn, const idx_t kk) :
   m(mm),
   n(nn),
   k(kk),
@@ -151,12 +137,12 @@ Array3D<T>::Array3D(const T* indata, const size_t mm, const size_t nn, const siz
   assert(n>0);
   assert(k>0);
   data.resize(N);
-  for(size_t ii=0; ii<N; ++ii) // deep copy
+  for(idx_t ii=0; ii<N; ++ii) // deep copy
     data[ii] = indata[ii];
 }
 
 template <typename T> 
-Array3D<T>::Array3D(const size_t mm, const size_t nn, const size_t kk, const double _dx, const double _dy, const double _dz) :
+Array3D<T>::Array3D(const idx_t mm, const idx_t nn, const idx_t kk, const double _dx, const double _dy, const double _dz) :
   m(mm),
   n(nn),
   k(kk),
@@ -175,7 +161,7 @@ Array3D<T>::Array3D(const size_t mm, const size_t nn, const size_t kk, const dou
 }
 
 template <typename T>
-Array3D<T>::Array3D(const T* indata, const size_t mm, const size_t nn, const size_t kk, const double _dx, const double _dy, const double _dz) :
+Array3D<T>::Array3D(const T* indata, const idx_t mm, const idx_t nn, const idx_t kk, const double _dx, const double _dy, const double _dz) :
   m(mm),
   n(nn),
   k(kk),
@@ -191,7 +177,7 @@ Array3D<T>::Array3D(const T* indata, const size_t mm, const size_t nn, const siz
   assert(dy>0.f);
   assert(dz>0.f);
   data.resize(N);
-  for(size_t ii=0; ii<N; ++ii) // deep copy
+  for(idx_t ii=0; ii<N; ++ii) // deep copy
     data[ii] = indata[ii];
 }
 
@@ -229,165 +215,156 @@ Array3D<T>::Array3D( const Array3D<T> &Input) :
 }
 
 template <typename T>
-inline size_t Array3D<T>::sub2ind(const size_t ii, const size_t jj, const size_t kk) const
+idx_t Array3D<T>::sub2ind(const idx_t ii, const idx_t jj, const idx_t kk) const
 {
   assert((ii+m*jj+m*n*kk) < N);
   return(ii+m*(jj+n*kk));
 }
 
 template <typename T>
-inline T Array3D<T>::get(const size_t idx) const
+T Array3D<T>::get(const idx_t idx) const
 {
   return(data[idx]);
 }
 
 template <typename T>
-inline T Array3D<T>::get(const size_t ii, const size_t jj, const size_t kk) const
+T Array3D<T>::get(const idx_t ii, const idx_t jj, const idx_t kk) const
 {
   return(data[sub2ind(ii,jj,kk)]);
 }
 
 template <typename T>
-inline size_t Array3D<T>::getm() const
+idx_t Array3D<T>::getm() const
 {
   return(m);
 }
 
 template <typename T>
-inline size_t Array3D<T>::getn() const
+idx_t Array3D<T>::getn() const
 {
   return(n);
 }
 
 template <typename T>
-inline size_t Array3D<T>::getk() const
+idx_t Array3D<T>::getk() const
 {
   return(k);
 }
 
 template <typename T>
-inline size_t Array3D<T>::getN() const
+idx_t Array3D<T>::getN() const
 {
   return(N);
 }
 
 template <typename T>
-inline double Array3D<T>::getdx() const
+double Array3D<T>::getdx() const
 {
   return(dx);
 }
 
 template <typename T>
-inline double Array3D<T>::getdy() const
+double Array3D<T>::getdy() const
 {
   return(dy);
 }
 
 template <typename T>
-inline double Array3D<T>::getdz() const
+double Array3D<T>::getdz() const
 {
   return(dz);
 }
 
 template <typename T>
-inline double Array3D<T>::lenx() const
+double Array3D<T>::lenx() const
 {
   return(static_cast<double>(n) * dx);
 }
 
 template <typename T>
-inline double Array3D<T>::leny() const
+double Array3D<T>::leny() const
 {
   return(static_cast<double>(m) * dy);
 }
 
 template <typename T>
-inline double Array3D<T>::lenz() const
+double Array3D<T>::lenz() const
 {
   return(static_cast<double>(k) * dz);
 }
 
 template <typename T>
-inline size_t Array3D<T>::size() const
+idx_t Array3D<T>::size() const
 {
   return(N);
 }
 
 template <typename T>
-inline void Array3D<T>::put(const T value, const size_t idx)
+void Array3D<T>::put(const T value, const idx_t idx)
 {
   data[idx] = value;
 }
 
 template <typename T>
-inline void Array3D<T>::put(const T value, const size_t ii, const size_t jj, const size_t kk)
+void Array3D<T>::put(const T value, const idx_t ii, const idx_t jj, const idx_t kk)
 {
   data[sub2ind(ii,jj,kk)] = value;
 }
 
 template <typename T>
-inline void Array3D<T>::putadd(const T value, const size_t idx)
+void Array3D<T>::putadd(const T value, const idx_t idx)
 {
   data[idx] += value;
 }
 
 template <typename T>
-inline void Array3D<T>::putadd(const T value, const size_t ii, const size_t jj, const size_t kk)
+void Array3D<T>::putadd(const T value, const idx_t ii, const idx_t jj, const idx_t kk)
 {
   data[sub2ind(ii,jj,kk)] += value;
 }
 
 template <typename T>
-void Array3D<T>::copyData(const Array3D<T> &input)
-{ // copy data after checking for agreement of sizes
-  if((input.getm() != m) || (input.getn() != n) || (input.getk() != k))
-    cout << "Data does not agree in size. Skipping call to copyData" << endl;
-  else
-    data = input.returnData();
-}
-
-template <typename T>
-inline T Array3D<T>::maxval() const
+T Array3D<T>::maxval() const
 {
   assert(N>0);
   T mval = data[0];
-  for(size_t ii=1;ii<N;++ii)
+  for(idx_t ii=1;ii<N;++ii)
     mval = mymax(mval,data[ii]);
   return(mval);
 }
 
 template <typename T>
-inline T Array3D<T>::minval() const
+T Array3D<T>::minval() const
 {
   assert(N>0);
   T mval = data[0];
-  for(size_t ii=1;ii<N;++ii)
+  for(idx_t ii=1;ii<N;++ii)
     mval = mymin(mval,data[ii]);
   return(mval);
 }
 
 template <typename T>
-inline T Array3D<T>::minabsval() const
+T Array3D<T>::minabsval() const
 {
   assert(N>0);
   T mval = data[0]*mysign(data[0]);
-  for(size_t ii=1;ii<N;++ii)
+  for(idx_t ii=1;ii<N;++ii)
     mval = mymin(mval,data[ii]*mysign(data[ii]));
   return(mval);
 }
 
 template <typename T>
-inline T Array3D<T>::maxabsval() const
+T Array3D<T>::maxabsval() const
 {
   assert(N>0);
   T mval = data[0]*mysign(data[0]);
-  for(size_t ii=1;ii<N;++ii)
+  for(idx_t ii=1;ii<N;++ii)
     mval = mymax(mval,data[ii]*mysign(data[ii]));
   return(mval);
 }
 
 template <typename T>
-inline T Array3D<T>::sum() const
+T Array3D<T>::sum() const
 {
   T val = 0;
   for( int ii=0; ii<N; ++ii )
@@ -396,185 +373,162 @@ inline T Array3D<T>::sum() const
 }
 
 template <typename T>
-inline void Array3D<T>::fillWithValue(const T value)
+void Array3D<T>::fillWithValue(const T value)
 {
-  for(size_t ii=0; ii<N; ++ii)
+  for(idx_t ii=0; ii<N; ++ii)
     data[ii] = value;
 }
 
 template <typename T>
-inline T Array3D<T>::sixNborMin(const size_t idx) const
+T Array3D<T>::sixNborMin(const idx_t idx) const
 {
   return(mymin(mymin(mymin(data[xp(idx)],data[xm(idx)]),mymin(data[yp(idx)],data[ym(idx)])),mymin(data[zp(idx)],data[zm(idx)])));
 }
 
 template <typename T>
-inline T Array3D<T>::sixNborMax(const size_t idx) const
+T Array3D<T>::sixNborMax(const idx_t idx) const
 {
   return(mymax(mymax(mymax(data[xp(idx)],data[xm(idx)]),mymax(data[yp(idx)],data[ym(idx)])),mymax(data[zp(idx)],data[zm(idx)])));
 }
 
 template <typename T>
-T* Array3D<T>::dataAddress()
-{ // returns address to first data element
-  return(&(data.front()));
-}
-
-template <typename T>
-vector<T> Array3D<T>::returnData() const
+std::vector<T> Array3D<T>::returnData() const
 { // returns a copy of the data vector
   return(data);
 }
 
 template <typename T>
-T* Array3D<T>::returnDataArray() const
-{ // returns a pointer to a new (independent) array with data copied in.
-  T* newArray = new T[getN()];
-  for(size_t ii=0;ii<N;++ii)
-    newArray[ii] = get(ii);
-  return(newArray);
-}
-
-template <typename T>
-Array3D<T> Array3D<T>::duplicateArray3D() const
-{ // deep copy of Array3D data
-  Array3D<T> v(m,n,k);
-  v.data = this->data;
-  return(v);
-}
-
-template <typename T>
-inline double Array3D<T>::getX(const size_t idx) const
+double Array3D<T>::getX(const idx_t idx) const
 {
   return(static_cast<double>(getXidx(idx)) / static_cast<double>(n));
 }
 
 template <typename T>
-inline double Array3D<T>::getY(const size_t idx) const
+double Array3D<T>::getY(const idx_t idx) const
 {
   return(static_cast<double>(getYidx(idx)) / static_cast<double>(m));
 }
 
 template <typename T>
-inline double Array3D<T>::getZ(const size_t idx) const
+double Array3D<T>::getZ(const idx_t idx) const
 {
   return(static_cast<double>(getZidx(idx)) / static_cast<double>(k));
 }
 
 template <typename T>
-inline size_t Array3D<T>::getXidx(const size_t idx) const
+idx_t Array3D<T>::getXidx(const idx_t idx) const
 {
   return((idx%(m*n))/m);
 }
 
 template <typename T>
-inline size_t Array3D<T>::getYidx(const size_t idx) const
+idx_t Array3D<T>::getYidx(const idx_t idx) const
 {
   return((idx%(m*n))%m);
 }
 
 template <typename T>
-inline size_t Array3D<T>::getZidx(const size_t idx) const
+idx_t Array3D<T>::getZidx(const idx_t idx) const
 {
   return(idx/(m*n));
 }
 
 template <typename T>
-inline size_t Array3D<T>::xp(const size_t idx) const
+idx_t Array3D<T>::xp(const idx_t idx) const
 {
   return( (idx%(m*n))<(n*m-m) ? (idx +m) : (idx+m-m*n) );
 }
 
 template <typename T>
-inline size_t Array3D<T>::xm(const size_t idx) const
+idx_t Array3D<T>::xm(const idx_t idx) const
 {
   return( (idx%(m*n))>(m-1) ? (idx -m) : (idx-m+m*n) );
 }
 
 template <typename T>
-inline size_t Array3D<T>::yp(const size_t idx) const
+idx_t Array3D<T>::yp(const idx_t idx) const
 {
   return( ((idx%(m*n))%m)==(m-1) ? (idx-m+1) : (idx+1) );
 }
 
 template <typename T>
-inline size_t Array3D<T>::ym(const size_t idx) const
+idx_t Array3D<T>::ym(const idx_t idx) const
 {
   return( ((idx%(m*n))%m)==(0) ? (idx+m-1) : (idx-1) );
 }
 
 template <typename T>
-inline size_t Array3D<T>::zp(const size_t idx) const
+idx_t Array3D<T>::zp(const idx_t idx) const
 {
   return( (idx < (m*n*(k-1))) ? (idx+m*n) : (idx+m*n-m*n*k) );
 }
 
 template <typename T>
-inline size_t Array3D<T>::zm(const size_t idx) const
+idx_t Array3D<T>::zm(const idx_t idx) const
 {
   return( (idx > (m*n-1)) ? (idx-m*n) : (idx-m*n+m*n*k) );
 }
 
 template <typename T>
-inline T Array3D<T>::getxp(const size_t idx) const
+T Array3D<T>::getxp(const idx_t idx) const
 {
   return(data[xp(idx)]);
 }
 
 template <typename T>
-inline T Array3D<T>::getxm(const size_t idx) const
+T Array3D<T>::getxm(const idx_t idx) const
 {
   return(data[xm(idx)]);
 }
 
 template <typename T>
-inline T Array3D<T>::getyp(const size_t idx) const
+T Array3D<T>::getyp(const idx_t idx) const
 {
   return(data[yp(idx)]);
 }
 
 template <typename T>
-inline T Array3D<T>::getym(const size_t idx) const
+T Array3D<T>::getym(const idx_t idx) const
 {
   return(data[ym(idx)]);
 }
 
 template <typename T>
-inline T Array3D<T>::getzp(const size_t idx) const
+T Array3D<T>::getzp(const idx_t idx) const
 {
   return(data[zp(idx)]);
 }
 
 template <typename T>
-inline T Array3D<T>::getzm(const size_t idx) const
+T Array3D<T>::getzm(const idx_t idx) const
 {
   return(data[zm(idx)]);
 }
 
 template <typename T>
-size_t Array3D<T>::countVal(const T value) const
+idx_t Array3D<T>::countVal(const T value) const
 {
-  size_t count = 0;
-  for(size_t ii=0; ii<N; ++ii)
+  idx_t count = 0;
+  for(idx_t ii=0; ii<N; ++ii)
     if(data[ii] == value)
       count++;
   return(count);
 }
 
 template <typename T>
-inline T& Array3D<T>::operator[] ( size_t I )
+T& Array3D<T>::operator[] ( idx_t I )
 {
   return data[I];
 }
 
 template <typename T>
-inline const T& Array3D<T>::operator[] ( size_t I ) const
+const T& Array3D<T>::operator[] ( idx_t I ) const
 {
   return(data[I]);
 }
 
 template <typename T>
-inline Array3D<T>& Array3D<T>::operator= ( const Array3D<T>& Vec )
+Array3D<T>& Array3D<T>::operator= ( const Array3D<T>& Vec )
 {
   assert(m == Vec.getm());
   assert(n == Vec.getn());
@@ -584,48 +538,41 @@ inline Array3D<T>& Array3D<T>::operator= ( const Array3D<T>& Vec )
 }
 
 template <typename T>
-inline Array3D<T>& Array3D<T>::operator*= ( const T Value )
+Array3D<T>& Array3D<T>::operator*= ( const T Value )
 {
-  for ( size_t i = 0; i < N; ++i )
+  for ( idx_t i = 0; i < N; ++i )
     data[i] *= Value;
   return(*this);
 }
 
 template <typename T>
-inline Array3D<T>& Array3D<T>::operator/= ( const T Value )
+Array3D<T>& Array3D<T>::operator/= ( const T Value )
 {
-  for ( size_t i = 0; i < N; ++i )
+  for ( idx_t i = 0; i < N; ++i )
     data[i] /= Value;
   return(*this);
 }
 
 template <typename T>
-inline Array3D<T>& Array3D<T>::operator+= ( const Array3D<T> &Vec )
+Array3D<T>& Array3D<T>::operator+= ( const Array3D<T> &Vec )
 {
-  for ( size_t i = 0; i < N; ++i )
+  for ( idx_t i = 0; i < N; ++i )
     data[i] += Vec.get( i );
   return(*this);
 }
 
 template <typename T>
-inline Array3D<T>& Array3D<T>::operator-= ( const Array3D<T> &Vec )
+Array3D<T>& Array3D<T>::operator-= ( const Array3D<T> &Vec )
 {
-  for ( size_t i = 0; i < N; ++i )
+  for ( idx_t i = 0; i < N; ++i )
     data[i] -= Vec.get( i );
   return(*this);
 }
 
 template <typename T>
-inline void Array3D<T>::setAll( const T val )
+void Array3D<T>::addMultiple ( const Array3D<T>& Vec, T Factor )
 {
-  for ( size_t i = 0; i < N; ++i )
-    data[i] = val;
-}
-
-template <typename T>
-inline void Array3D<T>::addMultiple ( const Array3D<T>& Vec, T Factor )
-{
-  for ( size_t i = 0; i < N; ++i )
+  for ( idx_t i = 0; i < N; ++i )
     data[i] += Vec.get( i ) * Factor;
 }
 

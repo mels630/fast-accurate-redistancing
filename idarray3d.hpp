@@ -1,13 +1,15 @@
 #ifndef _IDARRAY3D_HPP_
 #define _IDARRAY3D_HPP_
 
+#include <vector>
+
 #include "array3d.hpp"
 
 class IDArray3D : public Array3D<double> {
 private:
   explicit IDArray3D();                             // Empty constructor not permitted
 
-  vector<double*> qe; // The entries of the vector are pointers to arrays containing
+  std::vector<double*> qe; // The entries of the vector are pointers to arrays containing
                       // the interpolation coeffections for that index of the Array3D<double> data
                       // These are only filled in once interpolation is asked for around the index.
   const int flag;     // Interpolation type: (2=triquadratic) <-- currently only option
