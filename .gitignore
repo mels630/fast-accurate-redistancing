@@ -4,3 +4,4 @@ redistMain
 *.log
 html
 latex
+*.exe
