@@ -1,3 +1,6 @@
+// kill HEAPDONE
+// add bool returnu
+
 #ifndef _HEAP_HPP_
 #define _HEAP_HPP_
 
@@ -13,11 +16,16 @@
 
 #ifndef _HEAPSTRUCT_
 #define _HEAPSTRUCT_
+/// Struct defining the heap element. Essentially POD
 struct helt
 {
-  int i;
+public:
+  helt(double const _d, int const _i);
+  helt(double const _d, int const _i, double const _aux[3]);
+  
   double d;
   double aux[3];
+  int i;
 };
 #endif
 
@@ -25,7 +33,9 @@ using std::vector;
 using std::cout;
 using std::endl;
 
+/// Heap class, sorted on S, with auxilary data stored in T
 /// Much better to use the built-in priority queue, but we retain our own implementation a sorted heap here for posterity.
+template<class S, class T>
 class Heap
 {
 private:

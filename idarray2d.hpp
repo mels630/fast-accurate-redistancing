@@ -2,16 +2,17 @@
 #define _IDARRAY2D_HPP_
 
 #include "array2d.hpp"
+#include <vector>
 
+/// IDArray2D: class for interpolable Array2D<double>
 class IDArray2D : public Array2D<double> {
 private:
-
-  mutable std::vector<double*> qe; // The entries of the vector are pointers to arrays containing
-                                   // the interpolation coeffections for that index of the Array2D<double> data
-                                   // These are only filled in once interpolation is asked for around the index.
-  int const flag;                  // Interpolation type: (1=bilinear, 2=biquadratic, 3=bicubic)
+  ///\todo Convert qe to vector<unique_ptr<double>> // note, can we assign arrays this way?
+  mutable std::vector<double*> qe; ///< The entries of the vector are pointers to arrays containing
+                                   ///< the interpolation coeffections for that index of the Array2D<double> data
+                                   ///< These are only filled in once interpolation is asked for around the index.
+  int const flag;                  ///< Interpolation type: (1=bilinear, 2=biquadratic, 3=bicubic)
   void SetQe(idx_t const idx) const;
-  void freeQeIdxAll() const; // clear all interpolation coefficients
 public:
   IDArray2D() = delete; // Empty constructor not permitted
   IDArray2D(int const nn, int const _flag);                 // Constructor for nn x nn array

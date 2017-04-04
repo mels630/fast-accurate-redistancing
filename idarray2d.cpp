@@ -1,34 +1,57 @@
 #include "idarray2d.hpp"
 
+/// Constructor
+/// \param[in] nn    : Number of elements per row and column
+/// \param[in] _flag : Interpolation flag
 IDArray2D::IDArray2D(int const nn, int const _flag) :
   IDArray2D(nn, nn, _flag)
 { }
 
+/// Constructor
+/// \param[in] mm    : Number of elements per row
+/// \param[in] nn    : Number of elements per column
+/// \param[in] _flag : Interpolation flag
 IDArray2D::IDArray2D(int const mm, int const nn, int const _flag) :
   IDArray2D(mm, nn, 1./static_cast<double>(nn), 1./static_cast<double>(mm), _flag)
 { }
 
+/// Constructor
+/// \param[in] mm    : Number of elements per row
+/// \param[in] nn    : Number of elements per column  
+/// \param[in] _dx   : Element spacing in x
+/// \param[in] _dy   : Element spacing in y
+/// \param[in] _flag : Interpolation flag
 IDArray2D::IDArray2D(int const mm, int const nn, double const _dx, double const _dy, int const _flag) :
   Array2D<double>(mm,nn,_dx,_dy),
+  qe(),
   flag(_flag)
 {
   qe.assign(N, nullptr);
 }
 
+/// Copy constructor
+/// \param[in] input : Array2D<T> object to copy
+/// \param[in] _flag : Interpolation flag
 IDArray2D::IDArray2D(const Array2D<double> &input, int const _flag) :
   Array2D<double>(input,0),
+  qe(),
   flag(_flag)
 {
-  qe.resize(N);
-  for(idx_t ii=0; ii<N; ++ii)
-    qe[ii] = static_cast<double*>(nullptr);
+  qe.assign(N, nullptr);
 }
 
+/// Destructor
 IDArray2D::~IDArray2D()
-{
-  freeQeIdxAll();
+{ // clear all the interpolation coefficients
+  for (auto &elt : qe)
+    if (elt != nullptr) {
+      delete [] elt;
+      elt = nullptr;
+    }
 }
 
+/// Compute and store interpolation coefficients
+/// \param[in] idx : Flat index to create interpolation coefficients at
 void IDArray2D::SetQe(idx_t const idx) const
 {
   if (qe[idx] != nullptr)
@@ -96,6 +119,10 @@ void IDArray2D::SetQe(idx_t const idx) const
   }
 }
 
+/// Compute interpolated value at (x,y) ([0,0] element is origin)
+/// \param[in] x : x location to interpolate at
+/// \param[in] y : y location to interpolate at
+/// \return        Interpolated value
 double IDArray2D::interpolate(double x, double y) const
 {
   assert((flag==1) || (flag==2) || (flag==3));
@@ -148,6 +175,10 @@ double IDArray2D::interpolate(double x, double y) const
   }
 }
 
+/// Compute interpolated value at (x,y) ([0,0] element is origin)
+/// \param[in]  x      : x location to interpolate at
+/// \param[in]  y      : y location to interpolate at
+/// \param[out] result : [interpolated value, (gradient of data at x,y)_x (gradient of data at x,y)_y]
 void IDArray2D::interpolate(double x, double y, double(&result)[3]) const // returns interpolated value of data(x,y) in result[0] and gradient of data(x,y) in result[1:2]
 {
   assert((flag==2) || (flag==3));
@@ -199,11 +230,3 @@ void IDArray2D::interpolate(double x, double y, double(&result)[3]) const // ret
   }
 }
 
-void IDArray2D::freeQeIdxAll() const
-{ // clear all the interpolation coefficients
-  for (auto &elt : qe)
-    if (elt != nullptr) {
-      delete [] elt;
-      elt = nullptr;
-    }
-}

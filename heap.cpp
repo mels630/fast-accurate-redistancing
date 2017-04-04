@@ -1,6 +1,22 @@
 #include "heap.hpp"
 // maintains heap sorted by the double value (the int value is an index)
 
+/// Constructor
+/// \param[in] _d : double value
+/// \param[in] _i : integer value
+helt::helt(double const _d, int const _i)
+  : d(_d)
+  , i(_i)
+  , aux()
+{ }
+
+helt::helt(double const _d, int const _i, double const _aux[3])
+  : d(_d)
+  , i(_i)
+  , aux(_aux)
+{ }
+
+
 Heap::Heap(const int initcapacity) :
   useAux(false)
 {
