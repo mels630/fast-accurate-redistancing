@@ -14,11 +14,10 @@
 /// \return         Signed distance to the circle
 Array2D<double> makeCircle(idx_t const n, double const r, double const xc, double const yc)
 {
-  Array2D<double> u(n,n);
+  Array2D<double> u(n);
   for(idx_t ii=0; ii<n; ++ii) {
     double const x = static_cast<double>(ii) / static_cast<double>(n);
-    for(idx_t jj=0; jj<n; ++jj)
-    {
+    for(idx_t jj=0; jj<n; ++jj) {
       double const y = static_cast<double>(jj) / static_cast<double>(n);
       u.put(r-sqrt((x-xc)*(x-xc)+(y-yc)*(y-yc)), jj, ii);
     }
@@ -42,16 +41,21 @@ Array2D<double> makeCircle(idx_t const n, double const r)
 Array2D<double> makeBox(idx_t const n)
 { // make a function which is 0.5 inside a square and -0.5 outside.
   Array2D<double> u(n,n);
-  for(idx_t ii=0; ii<n; ++ii)
+  for(idx_t ii=0; ii<n; ++ii) {
     bool const bICond = (ii>=n/4) && (ii<=3*n/4);
     for(idx_t jj=0; jj<n; ++jj)
       if(bICond && (jj>=n/4) && (jj<=3*n/4))
         u.put(0.5f,jj,ii);
       else
         u.put(-0.5f,jj,ii);
+  }
   return(u);
 }
 
+/// Compute the L2 difference between arrays (treated as vectors)
+/// \param[in] u : First array to compare
+/// \param[in] v : Second array to compare
+/// \return        L2-difference, or -1. if shapes don't match
 double l2err(Array2D<double> const &u, Array2D<double> const &v)
 {
   if((u.getn() != v.getn()) || (u.getm() != v.getn()))
@@ -61,43 +65,60 @@ double l2err(Array2D<double> const &u, Array2D<double> const &v)
   return std::sqrt(err / static_cast<double>(u.getN()));
 }
 
-double normalize(std::array<double,2> &vec)
-{ // assume vec = <vec[0],vec[1]>
-  double normsq = vec[0]*vec[0]+vec[1]*vec[1];
+/// Normalize the vector
+/// \param[in,out] vec : Vector to normalize, in-place
+/// \return              Length of the vector prior to normalization
+double normalize(Point &vec)
+{
+  double const normsq = vec[0]*vec[0]+vec[1]*vec[1];
+  double const nrm = std::sqrt(normsq);
   if(normsq < 1e-14)
-    if(fabs(vec[0]) > fabs(vec[1]))
-    {
+    if(std::abs(vec[0]) > std::abs(vec[1])) {
       vec[0] = mysign(vec[0]);
       vec[1] = 0.0f;
-    }
-    else
-    {
+    } else {
       vec[0] = 0.0f;
       vec[1] = mysign(vec[1]);
     }
-  else
-  {
-    vec[0] /= sqrt(normsq);
-    vec[1] /= sqrt(normsq);
+  else {
+    vec[0] /= nrm;
+    vec[1] /= nrm;
   }
-  return(sqrt(normsq));
+  return nrm;
 }
 
-std::array<double, 2> ccomb(std::array<double,2> const &x1, std::array<double,2> const &x2, double const theta, double const xlen, double const ylen)
+/// Return a convex combination of two points (theta x1 + (1-theta) x2)
+/// \param[in] x1    : First point
+/// \param[in] x2    : Second point
+/// \param[in] theta : Combination parameter
+/// \param[in] xlen  : Length of space in x (for periodicity)
+/// \param[in] ylen  : Length of space in y (for periodicity)
+Point ccomb(Point const &x1, Point const &x2, double const theta, double const xlen, double const ylen)
 { // forms convex combination xr = theta*x1 + (1-theta)*x2
   assert((theta >= 0.) && (theta <= 1.) && (!std::isnan(theta)));
-
-  std::array<double,2> const diff({pdl(x2[0],x1[0],xlen), pdl(x2[1],x1[1],ylen)});
-  return std::array<double, 2>({x1[0] + (1.0f-theta)*diff[0], x1[1] + (1.0f-theta)*diff[1]});
+  Point const diff({pdl(x2[0],x1[0],xlen), pdl(x2[1],x1[1],ylen)});
+  return Point({x1[0] + (1.0f-theta)*diff[0], x1[1] + (1.0f-theta)*diff[1]});
 }
 
-double dist(std::array<double,2> const &x1, std::array<double,2> const &x2)
+/// Compute the distance between two points
+/// \param[in] x1 : First point
+/// \param[in] x2 : Second point
+/// \return         L2 distance between x1 and x2
+double dist(Point const &x1, Point const &x2)
 {
-  return std::sqrt(pd(x1[0],x2[0])*pd(x1[0],x2[0])+pd(x1[1],x2[1])*pd(x1[1],x2[1]));
+  Point const diff({pd(x1[0],x2[0]), pd(x1[1],x2[1])});
+  return std::sqrt(diff[0]*diff[0]+diff[1]*diff[1]);
 }
 
-double dist(std::arary<double,2> const &x1, std::array<double,2> const &x2, double const lenx, double const leny)
+/// Compute the periodic distance between two points
+/// \param[in] x1   : First point
+/// \param[in] x2   : Second point
+/// \param[in] xlen : Length of space in x
+/// \param[in] ylen : Length of space in y
+/// \return         L2 distance between x1 and x2
+double dist(Point const &x1, Point const &x2, double const xlen, double const ylen)
 {
-  return sqrt(pdl(x1[0],x2[0],lenx)*pdl(x1[0],x2[0],lenx)+pdl(x1[1],x2[1],leny)*pdl(x1[1],x2[1],leny));
+  Point const diff({pdl(x2[0],x1[0],xlen), pdl(x2[1],x1[1],ylen)});
+  return std::sqrt(diff[0]*diff[0]+diff[1]*diff[1]);
 }
 

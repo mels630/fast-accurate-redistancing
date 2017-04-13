@@ -2,17 +2,20 @@
 #define _TOOLBOX3D_HPP_
 
 #include "array3d.hpp"
+#include "defs.h"
 
+// Function definitions
+Array3D<double> makeSphere(idx_t const n, double const r, double const xc, double const yc, double const zc);
+Array3D<double> makeSphere(idx_t const n, double const r);
 double l2err(Array3D<double> const &u, Array3D<double> const &v);
-void ccomb(const double (&x1)[3], const double (&x2)[3], double (&xr)[3], double theta);
-void ccomb(const double (&x1)[4], const double (&x2)[4], double (&xr)[3], double theta);
-double dist3(const double *x1, const double *x2);
-void orthoVecs(const double (&in)[3], double (&out1)[3], double (&out2)[3]);
-void generateRandomVec(double (&out)[3], const double (&in)[3]);
-void mycross(const double (&A)[3], const double (&B)[3], double (&C)[3]);
-Array3D<double> makeSphere(const int n, const double r, const double xc, const double yc, const double zc);
-Array3D<double> makeSphere(const int n, const double r);
-double normalize(double (&vec)[3]);
-int minabs(const double *val, const int amt);
+double normalize(Point3 &vec);
+double dist3(Point3 const &x1, Point3 const &x2);
+double dist3(Point3 const &x1, Point3 const &x2, double const xlen, double const ylen, double const zlen);
+Point3 ccomb(Point3 const &x1, Point3 const &x2, double const theta);
+Point3 ccomb(Point3 const &x1, Point3 const &x2, double const theta, double const xlen, double const ylen, double const zlen);
+void orthoVecs(Point3 const &in, Point3 &out1, Point3 &out2);
+void generateRandomVec(Point3 &out, Point3 const &in);
+Point3 mycross(Point3 const &A, Point3 const &B);
+//int minabs(double const *val, idx_t const amt);
 
 #endif
