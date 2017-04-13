@@ -1,5 +1,20 @@
 #include "redist3.hpp"
 
+namespace {
+  void sort(double &a1, double &a2, double &a3)
+  {
+    /* Sort the values in a1, a2, and a3 so that
+       we return with a1<=a2<=a3 */
+    double c;
+    if(a2 < a1)
+      std::swap(a1,a2);
+    if(a3 < a1)
+      std::swap(a1,a2);
+    else if(a3 < a2)
+      std::swap(a2,a3);
+  }
+}
+
 void Redist3::redistance()
 {
   if((u.getn() != u.getm()) || (u.getn() != u.getk()))
@@ -93,7 +108,7 @@ double Redist3::estimateUpdate(const int idx)
   double b = mymin(fabs(u.getym(idx)),fabs(u.getyp(idx)));
   double c = mymin(fabs(u.getzm(idx)),fabs(u.getzp(idx)));
   double d;
-  sort(a,b,c);
+  ::sort(a,b,c);
   assert(a<=b);
   assert(b<=c);
 
@@ -106,19 +121,6 @@ double Redist3::estimateUpdate(const int idx)
       d = 1.0f/3.0f * (a+b+c+sqrt(3.0f*dx*dx+2.0f*(a*b+a*c+b*c-a*a-b*b-c*c)));
   }
   return(d*mysign(u.get(idx)));
-}
-
-void Redist3::sort(double &a1, double &a2, double &a3)
-{
-  /* Sort the values in a1, a2, and a3 so that
-     we return with a1<=a2<=a3 using c as temp storage */
-  double c;
-  if(a2 < a1)
-  {  c = a2; a2 = a1; a1 = c;}
-  if(a3 < a1)
-  { c = a3; a3 = a2; a2 = a1; a1 = c;}
-  else if(a3 < a2)
-  { c = a3; a3 = a2; a2 = c;}
 }
 
 void Redist3::setInterfaceValues()

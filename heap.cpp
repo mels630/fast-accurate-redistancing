@@ -1,72 +1,48 @@
 #include "heap.hpp"
-// maintains heap sorted by the double value (the int value is an index)
+#include <cassert>
+// maintains heap sorted on S, T is auxilary data
 
-/// Constructor
-/// \param[in] _d : double value
-/// \param[in] _i : integer value
-helt::helt(double const _d, int const _i)
-  : d(_d)
-  , i(_i)
-  , aux()
+/// Constructor for empty heap
+/// \param[in] initcapacity : Initial capacity and blocksize
+template<class S, class T>
+Heap<S,T>::Heap(idx_t const initcapacity) :
+  Heap(initcapacity, initcapacity)
 { }
 
-helt::helt(double const _d, int const _i, double const _aux[3])
-  : d(_d)
-  , i(_i)
-  , aux(_aux)
+/// Constructor for empty heap
+/// \param[in] initcapacity : Initial capacity
+/// \param[in] _blocksize   : Block size
+template<class S, class T>
+Heap<S,T>::Heap(idx_t const initcapacity, idx_t const _blocksize) :
+  h(initcapacity),
+  numelt(0),
+  capacity(initcapacity),
+  blocksize(_blocksize)
 { }
 
-
-Heap::Heap(const int initcapacity) :
-  useAux(false)
+/// Swap two elements
+/// \param[in] ix1 : First index location to swap
+/// \param[in] ix2 : Second index location to swap
+template<class S, class T>
+void Heap<S,T>::flip(idx_t ix1, idx_t ix2)
 {
-  h.resize(initcapacity);
-  capacity = initcapacity;
-  blocksize = initcapacity;
-  numelt = 0;
+  assert((ix1 < capacity) && (ix2 < capacity));
+  std::swap(h[ix1], h[ix2]);
 }
 
-Heap::Heap(const int initcapacity, const bool _useAux) :
-  useAux(_useAux)
+/// Add a new element to the help
+/// \param[in] t : Data component of element to add to heap
+/// \param[in] s : Sort component of element to add to heap
+template<class S, class T>
+void Heap<S,T>::addToHeap(T const &t, S const &s)
 {
-  h.resize(initcapacity);
-  capacity = initcapacity;
-  blocksize = initcapacity;
-  numelt = 0;
+  addToHeap(std::make_pair<S,T>(s,t));
 }
 
-void Heap::flip(int ix1, int ix2)
-{
-  struct helt tmp;
-  if((ix1 >= 0) && (ix1 <= numelt) && (ix2 >= 0) && (ix2 <= numelt))
-  {
-    tmp.d = h[ix1].d;
-    tmp.i = h[ix1].i;
-    h[ix1].d = h[ix2].d;
-    h[ix1].i = h[ix2].i;
-    h[ix2].d = tmp.d;
-    h[ix2].i = tmp.i;
-    if(useAux)
-    {
-      tmp.aux[0] = h[ix1].aux[0];
-      tmp.aux[1] = h[ix1].aux[1];
-      tmp.aux[2] = h[ix1].aux[2];
-      h[ix1].aux[0] = h[ix2].aux[0];
-      h[ix1].aux[1] = h[ix2].aux[1];
-      h[ix1].aux[2] = h[ix2].aux[2];
-      h[ix2].aux[0] = tmp.aux[0];
-      h[ix2].aux[1] = tmp.aux[1];
-      h[ix2].aux[2] = tmp.aux[2];
-    }
-  }
-  else
-  {
-    cout << "Trying to flip out-of-bounds elements in heap. Aborting ..." << endl;
-    abort();
-  }
-}
-
-void Heap::addToHeap(const int ii, const double dd, const double *cp)
+/// Add a new element to the help
+/// \param[in] st : Element to add to heap
+template<class S, class T>
+void Heap<S,T>::addToHeap(std::pair<S,T> const &st)
 { // min-heap: minimum element at top
   // Step 0: add more space to heap if needed
   if(numelt == capacity)
@@ -75,114 +51,70 @@ void Heap::addToHeap(const int ii, const double dd, const double *cp)
     h.resize(capacity);
   }
   // Step 1: add element (i,d) to bottom of heap
-  h[numelt].d = dd;
-  h[numelt].i = ii;
-  if(useAux)
-  {
-    h[numelt].aux[0] = cp[0];
-    h[numelt].aux[1] = cp[1];
-    h[numelt].aux[2] = cp[2];
-  }
+  h[numelt] = st;
   
   // Step 2: upheap
-  int done = 0;
-  int pos = numelt;
-  while(!done && pos > 0)
-    if(h[pos].d < h[par(pos)].d)
-    {
+  idx_t pos = numelt;
+  while(pos > 0)
+    if(h[pos].first < h[par(pos)].first) {
       flip(pos,par(pos));
       pos = par(pos);
     }
     else
-      done = 1;
+      break;
   // Step 3: increment numelt
   numelt++;
 }
 
-struct helt Heap::popFromHeap()
+/// Pop the top element from the heap and return it
+/// \param[out] : Top element from the heap if return is true
+/// \return     : True if pop succeeds
+template<class S, class T>
+bool Heap<S,T>::popFromHeap(std::pair<S,T> &st)
 { // pop top element
-  struct helt lval;
-  // Step 1: Store return value
   if(numelt == 0)
-  {
-    lval.i = HEAPDONE;
-    lval.d = 0.0f;
-    if(useAux)
-    {
-      lval.aux[0] = 0.0f;
-      lval.aux[1] = 0.0f;
-      lval.aux[2] = 0.0f;
-    }
-    return(lval);
-  }
-  lval.d = h[0].d;
-  lval.i = h[0].i;
-  if(useAux)
-  {
-    lval.aux[0] = h[0].aux[0];
-    lval.aux[1] = h[0].aux[1];
-    lval.aux[2] = h[0].aux[2];
-  }
+    return false;
+  
+  st = h[0];
   numelt--;
 
-  h[0].d = h[numelt].d;
-  h[0].i = h[numelt].i;
-  if(useAux)
-  {
-    h[0].aux[0] = h[numelt].aux[0];
-    h[0].aux[1] = h[numelt].aux[1];
-    h[0].aux[2] = h[numelt].aux[2];
-  }
-  int done = 0;
-  int pos = 0;
-  while(!done)
-  {
-    if(rch(pos) < numelt)
-    {
-      if(h[lch(pos)].d <= h[rch(pos)].d)
-      {
-	if(h[lch(pos)].d < h[pos].d)
-	{
+  h[0] = h[numelt];
+  idx_t pos = 0;
+  while(true) {
+    if(rch(pos) < numelt) {
+      if(h[lch(pos)].d <= h[rch(pos)].d) {
+	if(h[lch(pos)].d < h[pos].d) {
 	  flip(lch(pos),pos);
 	  pos = lch(pos);
 	}
 	else
-	  done = 1;
-      }
-      else
-      {
-	if(h[rch(pos)].d < h[pos].d)
-	{
+	  return true;
+      } else {
+	if(h[rch(pos)].d < h[pos].d) {
 	  flip(rch(pos),pos);
 	  pos = rch(pos);
-	}
-	else
-	  done = 1;
+	} else
+	  return true;
       }
-    }
-    else
-    {
-      if(lch(pos) < numelt)
-      {
-	if(h[lch(pos)].d < h[pos].d)
-	{
+    } else {
+      if(lch(pos) < numelt) {
+	if(h[lch(pos)].d < h[pos].d) {
 	  flip(lch(pos),pos);
 	  pos = lch(pos);
 	}
 	else
-	  done = 1;
+	  return true;
       }
       else
-	done = 1;
+	return true;
     }
   }
-  return(lval);
 }
 
-void Heap::showHeap() const
+/// Print the heap
+template<class S, class T>
+void Heap<S,T>::showHeap() const
 {
   for(int ii=0; ii<numelt; ++ii)
-  {
-    printf(" i=%d, d = %f\n",h[ii].i,h[ii].d);
-  }
+    std::cout << "(" << h[ii].first << "," << h[ii].second << std::endl;
 }

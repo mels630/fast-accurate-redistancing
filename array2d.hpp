@@ -10,8 +10,6 @@
 #include<cassert>
 #include<algorithm>
 
-using idx_t = std::size_t;
-
 /// Array2D: template class for two-dimensional arrays with fixed spacing.
 template <typename T> 
 class Array2D
@@ -58,6 +56,7 @@ public:
   T fourNborMin(idx_t const idx) const;
   T fourNborMax(idx_t const idx) const;
   std::vector<T> const& returnData() const;
+  std::vector<T> &returnData();
   double getX(idx_t const idx) const;
   double getY(idx_t const idx) const;
   idx_t getXidx(idx_t const idx) const;
@@ -422,6 +421,14 @@ T Array2D<T>::fourNborMax(idx_t const idx) const
 template <typename T>
 std::vector<T> const& Array2D<T>::returnData() const
 { // returns a const ref to data std::vector
+  return(data);
+}
+
+/// Get reference to vector of data in array
+/// \return Reference to vector of data in array
+template <typename T>
+std::vector<T>& Array2D<T>::returnData()
+{ // returns a ref to data std::vector
   return(data);
 }
 

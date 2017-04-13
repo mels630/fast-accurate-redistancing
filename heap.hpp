@@ -5,33 +5,12 @@
 #define _HEAP_HPP_
 
 #include <vector>
+#include <utility>
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
 
-#ifndef HEAPDONE
-#define HEAPDONE -32323
-#endif
-
-
-#ifndef _HEAPSTRUCT_
-#define _HEAPSTRUCT_
-/// Struct defining the heap element. Essentially POD
-struct helt
-{
-public:
-  helt(double const _d, int const _i);
-  helt(double const _d, int const _i, double const _aux[3]);
-  
-  double d;
-  double aux[3];
-  int i;
-};
-#endif
-
-using std::vector;
-using std::cout;
-using std::endl;
+using idx_t = std::size_t;
 
 /// Heap class, sorted on S, with auxilary data stored in T
 /// Much better to use the built-in priority queue, but we retain our own implementation a sorted heap here for posterity.
@@ -39,56 +18,63 @@ template<class S, class T>
 class Heap
 {
 private:
-  // disable automatic constructors
-  explicit Heap( ); // no empty constructor
-  explicit Heap(const Heap &input); // no copy constructor
   // Private data
-  vector<struct helt> h;
-  int numelt;
-  int capacity;
-  int blocksize;
-  const bool useAux;
+  std::vector<std::pair<S, T> > h;
+  idx_t numelt;
+  idx_t capacity;
+  idx_t blocksize;
 
   // Private member functions
-  void flip(int ix1, int ix2);
-  int par(const int ix);
-  int lch(const int ix);
-  int rch(const int ix);
+  void flip(idx_t const ix1, idx_t const ix2);
+  idx_t par(idx_t const ix);
+  idx_t lch(idx_t const ix);
+  idx_t rch(idx_t const ix);
 
 public:
+  Heap( ) = delete; // no empty constructor
+  explicit Heap(Heap const &input) = delete; // no copy constructor
   
-  explicit Heap(const int initcapacity);
-  explicit Heap(const int initcapacity, const bool _useAux);
-  inline void addToHeap(const int ii, const double dd);
-  void addToHeap(const int ii, const double dd, const double *cp);
+  explicit Heap(idx_t const initcapacity);
+  Heap(idx_t const initcapacity, idx_t const _blocksize);
+  void addToHeap(T const &t, S const &s);
+  void addToHeap(std::pair<S,T> const &st);
   void showHeap() const;
-  struct helt popFromHeap();
-  inline int showCapacity() const;
-  inline int numberOfElements() const;
+  bool popFromHeap(std::pair<S, T>& st);
+  inline idx_t showCapacity() const;
+  inline idx_t numberOfElements() const;
 }; 
 
-inline int Heap::par(const int ix)
+/// Compute parent index for ix
+/// \param[in] ix : Child index
+/// \return         Parent index
+template<class S, class T>
+inline idx_t Heap<S,T>::par(idx_t const ix)
 { return((ix-1)/2); }
 
-inline int Heap::lch(const int ix)
+/// Compute left child index for ix
+/// \param[in] ix : Parent index
+/// \return         Left child index
+template<class S, class T>
+inline idx_t Heap<S,T>::lch(idx_t const ix)
 { return(2*ix+1); }
 
-inline int Heap::rch(const int ix)
+/// Compute right child index for ix
+/// \param[in] ix : Parent index
+/// \return         Right child index
+template<class S, class T>
+inline idx_t Heap<S,T>::rch(idx_t const ix)
 { return(2*ix+2); }
 
-inline void Heap::addToHeap(const int ii, const double dd)
-{ addToHeap(ii,dd,NULL); }
-
-inline int Heap::showCapacity() const
+/// Get heap capacity
+/// \return Heap<S,T> capacity
+template<class S, class T>
+inline idx_t Heap<S,T>::showCapacity() const
 { return(capacity); }
 
-inline int Heap::numberOfElements() const
+/// Get number of elements in heap
+/// \return Number of elements
+template<class S, class T>
+inline idx_t Heap<S,T>::numberOfElements() const
 { return(numelt); }
-
-inline void showHelt(const struct helt &h);
-
-inline void showHelt(const struct helt &h)
-{ cout << "(" << h.i << "," << h.d << ";" << h.aux[0] << "," << h.aux[1] << ")" << endl; }
-
 
 #endif

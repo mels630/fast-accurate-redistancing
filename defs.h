@@ -1,6 +1,10 @@
 #ifndef _DEFS_H_
 #define _DEFS_H_
 
+#include <vector> // for std::size_t
+
+using idx_t = std::size_t;
+
 /*********** Define Pi *********/
 #ifndef PI
 #define TWOPI (6.283185307179586)

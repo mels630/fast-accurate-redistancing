@@ -63,6 +63,7 @@ public:
   T sixNborMin(const idx_t idx) const;
   T sixNborMax(const idx_t idx) const;
   std::vector<T> const &returnData() const;
+  std::vector<T>& returnData();
   double getX(const idx_t idx) const;
   double getY(const idx_t idx) const;
   double getZ(const idx_t idx) const;
@@ -403,12 +404,20 @@ T Array3D<T>::sixNborMax(const idx_t idx) const
 {
   return(mymax(mymax(mymax(data[xp(idx)],data[xm(idx)]),mymax(data[yp(idx)],data[ym(idx)])),mymax(data[zp(idx)],data[zm(idx)])));
 }
-
+ 
 /// Get const reference to vector of data in array
 /// \return Const reference to vector of data in array
 template <typename T>
 std::vector<T> const &Array3D<T>::returnData() const
 { // returns a const ref to data
+  return(data);
+}
+
+/// Get reference to vector of data in array
+/// \return Reference to vector of data in array
+template <typename T>
+std::vector<T> &Array3D<T>::returnData()
+{ // returns a ref to data
   return(data);
 }
 
