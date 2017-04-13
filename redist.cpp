@@ -27,7 +27,7 @@ Aux::Aux(idx_t const _i) :
 /// \param[in] _width : Thresholding width (pixels)
 /// \param[in] _flag  : Interpolation order flag
 Redist::Redist(Array2D<double> const &_u, idx_t const _width, int const _flag) :
-  Redist(_u, 1./static_cast<double>(n), 1./static_cast<double>(m), _width, _flag)
+  Redist(_u, 1./static_cast<double>(_u.getn()), 1./static_cast<double>(_u.getm()), _width, _flag)
 { }
 
 /// Constructor
@@ -155,9 +155,9 @@ void Redist::setInterfaceValues()
     if ((sgn.getxp(ii)-sgn[ii]) || (sgn.getxm(ii)-sgn[ii]) ||
         (sgn.getyp(ii)-sgn[ii]) || (sgn.getym(ii)-sgn[ii]))
       bnd.push_back(ii);
- 
+
   std::vector<double> dr(bnd.size());
-  
+
   std::transform(bnd.begin(), bnd.end(), dr.begin(), [&](idx_t const ii)->double {
       // compute norm(grad u) with centered differences
       double ry = (u.getyp(ii)-u.getym(ii))/dy/2.;
@@ -168,13 +168,13 @@ void Redist::setInterfaceValues()
       rx = std::max(std::abs(u.getxp(ii)-u[ii]),std::abs(u[ii]-u.getxm(ii)))/dx;
       ry = std::max(std::abs(u.getyp(ii)-u[ii]),std::abs(u[ii]-u.getym(ii)))/dy;
       double const dr2 = sqrt(rx*rx+ry*ry);
-      
+
       // Accept one-sided difference is much different than centered difference
       if((dr < (0.5*dr2)) || (dr > (2.0*dr2)))
 	dr = dr2;
       return dr;
     });
-  for(size_t ii = 0; ii<bnd.size(); ++ii)    
+  for(size_t ii = 0; ii<bnd.size(); ++ii)
     u[bnd[ii]] /= dr[ii];
 }
 
