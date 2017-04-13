@@ -4,11 +4,10 @@
 #include "array2d.hpp"
 #include "idarray2d.hpp"
 #include "heap.hpp"
+#include "defs.h"
 
 #include <utility>
 #include <array>
-
-using Point = std::array<double, 2>;
 
 /// Auxilary data-carrying POD struct for heap operations
 struct Aux
@@ -57,7 +56,7 @@ private:
   Helt performDO(idx_t const idx);
   Helt performDOSurf(idx_t const idx);
   Helt performDO(idx_t const idx, Point const &cpguess);
-  std::array<double, 2> lineSearch(idx_t const idx, Point &grad);
+  Point lineSearch(idx_t const idx, Point &grad);
   bool findOppSign(idx_t const idx, Point &guess);
   void bisect(idx_t const idx, Point &guess);
   double bisect(Point &result, std::pair<Point, double> const &xm, std::pair<Point, double> const &xp);
@@ -69,19 +68,14 @@ private:
   bool diffSign(idx_t const idx);
   
 public:
-  Redist(const Array2D<double> &_u, int const _width, int const _flag);
-  Redist(const Array2D<double> &_u, double const _dx, double const _dy, int const _width, int const _flag);
+  Redist(Array2D<double> const &_u, idx_t const _width, int const _flag);
+  Redist(Array2D<double> const &_u, double const _dx, double const _dy, idx_t const _width, int const _flag);
   void redistance();
   void dump_u(double *v);
-  inline Array2D<double> dump_u();
-
+  Array2D<double> const& dump_u();
+  
   void dump_cp(double *cpxArr, double *cpyArr);
   
 };
-
-inline Array2D<double> Redist::dump_u()
-{ // assumes return argument already has correct size
-  return(u);
-}
 
 #endif

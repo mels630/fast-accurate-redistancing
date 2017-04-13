@@ -9,8 +9,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <stdio.h>
-
-using idx_t = std::size_t;
+#include "defs.h"
 
 /// Heap class, sorted on S, with auxilary data stored in T
 /// Much better to use the built-in priority queue, but we retain our own implementation a sorted heap here for posterity.
@@ -38,7 +37,7 @@ public:
   Heap(idx_t const initcapacity, idx_t const _blocksize);
   void addToHeap(T const &t, S const &s);
   void addToHeap(std::pair<S,T> const &st);
-  void showHeap() const;
+  //void showHeap() const;
   bool popFromHeap(std::pair<S, T>& st);
   inline idx_t showCapacity() const;
   inline idx_t numberOfElements() const;

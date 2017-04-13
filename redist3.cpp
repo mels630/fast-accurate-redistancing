@@ -1,11 +1,14 @@
 #include "redist3.hpp"
+#include "toolbox3d.hpp"
+#include <iostream>
+#include <cstring>
+#include <cassert>
 
 namespace {
   void sort(double &a1, double &a2, double &a3)
   {
     /* Sort the values in a1, a2, and a3 so that
        we return with a1<=a2<=a3 */
-    double c;
     if(a2 < a1)
       std::swap(a1,a2);
     if(a3 < a1)
@@ -15,216 +18,37 @@ namespace {
   }
 }
 
-void Redist3::redistance()
-{
-  if((u.getn() != u.getm()) || (u.getn() != u.getk()))
-    cout << " Warning: m = " << u.getm() << ", n = " << u.getn() << ", and k = " << u.getk() << ". Code needs to be checked carefully for non-cubic grid! Trying to continue ..." << endl;
+using BracketPair3 = std::pair<Point3, double>;
 
-  if((flag == 0) || (flag == 1))
-  {
-    fastMarchingRedist();
-    if(flag == 0)
-      secondOrderIterations();
-  }
-  else if((flag == 2) || (flag == 3))
-    directionalOptimization();
-  else
-    cout << "Do not recognize the flag. Cowardly refusing to do anything." << endl;
-}
+/// Constructor with full arguments
+/// \param[in] _i   : Index value
+/// \param[in] _aux : Auxilary double array values
+Aux3::Aux3(idx_t const _i, Point3 const &_aux) :
+  i(_i),
+  aux(_aux)
+{ }
 
-void Redist3::fastMarchingRedist()
-{
-  setInterfaceValues();
-  thresholdAwayFromInterface(bnd);
+/// Constructor from index only
+/// \param[in] _i   : Index value
+Aux3::Aux3(idx_t const _i) :
+  i(_i),
+  aux()
+{ } 
 
-  for(size_t ii=0;ii<bnd.size();++ii)
-    updateAndAddNeighborsToHeap(bnd[ii]);
-
-  // while heap is non-empty, fix its top value, and update the neighbors
-  while(1)
-  {
-    struct helt h1 = h.popFromHeap();
-    //printf(" h1.i = %d, hi.d = %f\n",h1.i,h1.d);
-    if(h1.i == HEAPDONE) // if heap is empty, break from loop
-      break; 
-    if((state.get(h1.i) == false) && (fabs(h1.d) < thres)) // don't update if outside threshold cutoff
-    {
-      applyResult(h1);
-      state.put(true,h1.i);
-      updateAndAddNeighborsToHeap(h1.i);
-    }
-  }
-}
-
-void Redist3::updateAndAddNeighborsToHeap(const int idx)
-{ // fix the value at u[idx], update its 6 neighbors if they are not already fixed, and make sure they're in the heap at the appropriate location
-  int idx2arr[6];
-  idx2arr[0] = u.xp(idx);
-  idx2arr[1] = u.xm(idx); 
-  idx2arr[2] = u.yp(idx);
-  idx2arr[3] = u.ym(idx);
-  idx2arr[4] = u.zp(idx);
-  idx2arr[5] = u.zm(idx);
-  for(int ii=0;ii<6;++ii)
-  {
-    if(state.get(idx2arr[ii]) == false) // if true, value is already fixed
-    {
-      double dtemp = estimateUpdate(idx2arr[ii]);
-      if(fabs(dtemp) < fabs(u.get(idx2arr[ii])))
-      {
-        u.put(dtemp,idx2arr[ii]);
-        h.addToHeap(idx2arr[ii],fabs(dtemp));
-      }
-    }
-  }
-}
-
-void Redist3::updateAndAddNeighborsToHeapDO(const int idx)
-{ // fix the value at u[idx], update its 4 neighbors if they are not already fixed, and make sure they're in the heap at the appropriate location
-  int idx2arr[6];
-  idx2arr[0] = u.xp(idx);
-  idx2arr[1] = u.xm(idx); 
-  idx2arr[2] = u.yp(idx);
-  idx2arr[3] = u.ym(idx);
-  idx2arr[4] = u.zp(idx);
-  idx2arr[5] = u.zm(idx);
-  for(int ii=0;ii<6;++ii)
-  {
-    if(state.get(idx2arr[ii]) == false) // if true, value is already fixed
-    {
-      struct helt htemp = performDO(idx2arr[ii],cpx.get(idx),cpy.get(idx),cpz.get(idx));
-      if(fabs(htemp.d) < fabs(u.get(idx2arr[ii])))
-      {
-        applyResult(htemp);
-        h.addToHeap(idx2arr[ii],fabs(htemp.d),htemp.aux);
-      }
-    }
-  }
-}
-
-double Redist3::estimateUpdate(const int idx)
-{
-  double a = mymin(fabs(u.getxm(idx)),fabs(u.getxp(idx)));
-  double b = mymin(fabs(u.getym(idx)),fabs(u.getyp(idx)));
-  double c = mymin(fabs(u.getzm(idx)),fabs(u.getzp(idx)));
-  double d;
-  ::sort(a,b,c);
-  assert(a<=b);
-  assert(b<=c);
-
-  if((b-a)>=dx)
-    d = a+dx;
-  else
-  {
-    d = 0.5f * (a+b+sqrt(2.0f*dx*dx-(a-b)*(a-b)));
-    if(d > c)
-      d = 1.0f/3.0f * (a+b+c+sqrt(3.0f*dx*dx+2.0f*(a*b+a*c+b*c-a*a-b*b-c*c)));
-  }
-  return(d*mysign(u.get(idx)));
-}
-
-void Redist3::setInterfaceValues()
-{ 
-  Array3D<int> sgn(u.getm(),u.getn(),u.getk());
-  for(size_t ii=0; ii<sgn.getN(); ++ii)
-    sgn.put(static_cast<int>(mysign(u.get(ii))),ii);
-  for(size_t ii=0; ii<sgn.getN(); ++ii)
-    if((abs(sgn.getxp(ii)-sgn.get(ii)) + abs(sgn.getxm(ii)-sgn.get(ii)) +
-        abs(sgn.getyp(ii)-sgn.get(ii)) + abs(sgn.getym(ii)-sgn.get(ii)) +
-        abs(sgn.getzp(ii)-sgn.get(ii)) + abs(sgn.getzm(ii)-sgn.get(ii)) )>0)
-      bnd.push_back(ii);
-
-  vector<double> dr(bnd.size());
-
-  for(size_t ii=0; ii<bnd.size(); ++ii)
-  {
-    // compute norm(grad u) with centered differences
-    double rx = (u.getxp(bnd[ii])-u.getxm(bnd[ii]))/dx/2.0f;
-    double ry = (u.getyp(bnd[ii])-u.getym(bnd[ii]))/dy/2.0f;
-    double rz = (u.getzp(bnd[ii])-u.getzm(bnd[ii]))/dz/2.0f;
-    dr[ii] = sqrt(rx*rx+ry*ry+rz*rz);
-
-    // compute norm(grad u) with one-sided differences
-    rx = mymax(fabs(u.getxp(bnd[ii])-u.get(bnd[ii])),fabs(u.get(bnd[ii])-u.getxm(bnd[ii])))/dx;
-    ry = mymax(fabs(u.getyp(bnd[ii])-u.get(bnd[ii])),fabs(u.get(bnd[ii])-u.getym(bnd[ii])))/dy;
-    rz = mymax(fabs(u.getzp(bnd[ii])-u.get(bnd[ii])),fabs(u.get(bnd[ii])-u.getzm(bnd[ii])))/dz;
-    const double dr2 = sqrt(rx*rx+ry*ry+rz*rz);
-
-    // Accept one-sided difference is much different than centered difference
-    if((dr[ii] < (0.5*dr2)) || (dr[ii] > (2.0*dr2)))
-      dr[ii] = dr2;
-  }
-  for(size_t ii=0; ii<bnd.size();++ii)
-    u.put(u.get(bnd[ii])/dr[ii],bnd[ii]);
-}
-
-void Redist3::setInterfaceValuesDO()
-{ 
-  Array3D<int> sgn(m,n,k);
-
-  double meanabsbndval = 0.0f;
-
-  for(size_t ii=0; ii<sgn.getN(); ++ii)
-    sgn.put(static_cast<int>(mysigntol(u0.get(ii),1e-10)),ii);
-  for(size_t ii=0; ii<sgn.getN(); ++ii)
-    if((abs(sgn.getxp(ii)-sgn.get(ii)) + abs(sgn.getxm(ii)-sgn.get(ii)) +
-        abs(sgn.getyp(ii)-sgn.get(ii)) + abs(sgn.getym(ii)-sgn.get(ii)) +
-        abs(sgn.getzp(ii)-sgn.get(ii)) + abs(sgn.getzm(ii)-sgn.get(ii)))>0)
-    {
-      bnd.push_back(ii);
-      meanabsbndval += fabs(u0.get(ii));
-    }
-
-  const double dr = mymax3(dx,dy,dz);
-  meanabsbndval /= static_cast<double>(bnd.size());
-  if(meanabsbndval > dr)
-    for(size_t ii=0; ii<u0.getN(); ++ii)
-      u0.put(u0.get(ii)/meanabsbndval*dr,ii);
-
-  vector<struct helt> bndval;
-  bndval.resize(bnd.size());
-  for(size_t ii=0; ii<bnd.size(); ++ii)
-  {
-    bndval[ii] = performDO(bnd[ii]);
-    cpx.put(bndval[ii].aux[0],bndval[ii].i);
-    cpy.put(bndval[ii].aux[1],bndval[ii].i);
-    cpz.put(bndval[ii].aux[2],bndval[ii].i);
-  }
-
-  for(size_t ii=0; ii<bnd.size();++ii)
-  {
-    applyResult(bndval[ii]);
-    state.put(true,bndval[ii].i);
-  }
-
-  //printf("u[15597] = %f\n",u.get(15597));
-  //printf(" 0.7\n");fflush(stdout);
-
-}
-
-void Redist3::thresholdAwayFromInterface(vector<int> &bndry)
-{
-  for(size_t ii=0;ii<state.getN();++ii)
-    state.put(false,ii);
-  for(vector<int>::iterator it=bndry.begin(); it != bndry.end(); ++it)
-  {
-    state.put(true,*it); // true indicates value is fixed (false otherwise)
-  }
-  for(size_t ii=0;ii<state.getN();++ii)
-    if(!state.get(ii))
-      u.put(mysign(u.get(ii))*thres,ii);
-}
-
-Redist3::Redist3(const Array3D<double> &_u, const int _width, const int _flag) :
+/// Constructor
+/// \param[in] _u     : Input level set function
+/// \param[in] _width : Thresholding width (pixels)
+/// \param[in] _flag  : Interpolation order flag
+Redist3::Redist3(const Array3D<double> &_u, const idx_t _width, const int _flag) :
   width(_width),
   flag(_flag),
   m(_u.getm()),
   n(_u.getn()),
   k(_u.getk()),
   N(m*n*k),
-  dx(1.0f/static_cast<double>(n)),
-  dy(1.0f/static_cast<double>(m)),
-  dz(1.0f/static_cast<double>(k)),
+  dx(1./static_cast<double>(n)),
+  dy(1./static_cast<double>(m)),
+  dz(1./static_cast<double>(k)),
   thres(static_cast<double>(width+1)*mymax3(dx,dy,dz)),
   cpflag((_flag==2) || (_flag==3)),
   h(10*width,cpflag),
@@ -233,707 +57,626 @@ Redist3::Redist3(const Array3D<double> &_u, const int _width, const int _flag) :
   u(_u),
   cpx(m,n,k),
   cpy(m,n,k),
-  cpz(m,n,k)
+  cpz(m,n,k),
+  bWarn(false)
 { }
 
-void Redist3::directionalOptimization()
+// Perform the redistancing
+void Redist3::redistance()
 {
-  //printf("\n0\n"); fflush(stdout);
-  setInterfaceValuesDO(); 
-  //printf("1\n"); fflush(stdout);
-  thresholdAwayFromInterface(bnd);
-  //printf("2\n"); fflush(stdout);
+  if((u.getn() != u.getm()) || (u.getn() != u.getk()))
+    std::cout << " Warning: m = " << u.getm() << ", n = " << u.getn() << ", and k = " << u.getk() << ". Code needs to be checked carefully for non-cubic grid! Trying to continue ..." << std::endl;
+  
+  if((flag == 0) || (flag == 1)) {
+    fastMarchingRedist();
+    if(flag == 0)
+      secondOrderIterations();
+  } else if((flag == 2) || (flag == 3))
+    directionalOptimization();
+  else
+    std::cout << "Do not recognize the flag. Cowardly refusing to do anything." << std::endl;
+}
 
-  for(size_t ii=0;ii<bnd.size();++ii)
-    updateAndAddNeighborsToHeapDO(bnd[ii]);
-  //printf("3\n"); fflush(stdout);
+/// Internal function for fast marching redistancing
+void Redist3::fastMarchingRedist()
+{
+  setInterfaceValues();
+  thresholdAwayFromInterface();
 
-  while(1)
-  {
-    struct helt h1 = h.popFromHeap();
-    if(h1.i == HEAPDONE) // if heap is empty, break from loop
-      break; 
-    if((state.get(h1.i)==false) && (fabs(h1.d) < thres)) // don't update if outside threshold cutoff, or already fixed
-    {
-      applyResult(h1);
-      cpx.put(h1.aux[0],h1.i);
-      cpy.put(h1.aux[1],h1.i);
-      cpz.put(h1.aux[2],h1.i);
-      state.put(true,h1.i);
-      updateAndAddNeighborsToHeapDO(h1.i);
+  for (idx_t const ix : bnd)
+    updateAndAddNeighborsToHeap(ix);
+
+  // while heap is non-empty, fix its top value, and update the neighbors
+  Helt3 helt;
+  while(h.popFromHeap(helt)) {
+    if((state.get(helt.second.i) == false) && (std::abs(helt.first) < thres)) { // don't update if outside threshold cutoff
+      applyResult(helt);
+      state.put(true, helt.second.i);
+      updateAndAddNeighborsToHeap(helt.second.i);
     }
   }
-  //printf("4\n"); fflush(stdout);
 }
 
-void Redist3::applyResult(const struct helt &h)
+/// Fix the value at u[idx], update its 4 neighbors if they are not already fixed, and make sure they're in the heap at the appropriate location
+/// \param[in] idx : Location to work from
+void Redist3::updateAndAddNeighborsToHeap(idx_t const idx)
 {
-  u.put(mysign(u.get(h.i))*h.d,h.i);
-  if(flag > 1)
-  {
-    cpx.put(h.aux[0],h.i);
-    cpy.put(h.aux[1],h.i);
-    cpz.put(h.aux[2],h.i);
+  std::array<idx_t, 6> idx2arr = {u.xp(idx), u.xm(idx), u.yp(idx), u.ym(idx), u.zp(idx), u.zm(idx)};
+  for(idx_t const ind : idx2arr) {
+    if(!state.get(ind)) { // if true, value is already fixed
+      double const dtemp = estimateUpdate(ind);
+      if(std::abs(dtemp) < std::abs(u[ind])) {
+        u[ind] = dtemp;
+        h.addToHeap(Aux3(ind), std::abs(dtemp));
+      }
+    }
   }
 }
 
-struct helt Redist3::performDO(const int idx)
-{ // make a guess for interface location and call performDO(const int ind, const double *cpguess)
-  double grad[3], cpguess[3];
-  grad[0] = pd(u.getxp(idx),u.getxm(idx)) / (2.0f * dx);
-  grad[1] = pd(u.getyp(idx),u.getym(idx)) / (2.0f * dy);
-  grad[2] = pd(u.getzp(idx),u.getzm(idx)) / (2.0f * dz);
-  //printf("  0.5.0\n"); fflush(stdout);
-  lineSearch(idx,grad,cpguess);
-
-  //printf(" idx = %d, grad=(%f,%f,%f), cpguess = (%f,%f,%f)\n",idx,grad[0],grad[1],grad[2],cpguess[0],cpguess[1],cpguess[2]);
-  //printf("    u(idx) = %f, u(cpguess) = %f.\n",u0.get(idx),u0.interpolate(cpguess[0],cpguess[1],cpguess[2]));
-
-  //printf("  0.5.1\n"); fflush(stdout);
-  return(performDO(idx,cpguess[0],cpguess[1],cpguess[2]));
+/// Fix the value at u[idx], update its 6 neighbors if they are not already fixed, and make sure they're in the heap at the appropriate location -- for directional optimization
+/// \param[in] idx : Location to work from
+void Redist3::updateAndAddNeighborsToHeapDO(idx_t const idx)
+{
+  std::array<idx_t, 6> const idx2arr = {u.xp(idx), u.xm(idx), u.yp(idx), u.ym(idx), u.xp(idx), u.xm(idx)};
+  for (idx_t const ind : idx2arr) {
+    if(!state.get(ind)) { // if true, value is already fixed
+      Helt3 const htemp = performDO(ind, Point3({cpx[idx],cpy[idx],cpz[idx]}));
+      if(std::abs(htemp.first) < std::abs(u[ind])) {
+        applyResult(htemp);
+        h.addToHeap(htemp);
+      }
+    }
+  }
 }
 
-struct helt Redist3::performDO(const int idx, const double cpxguess, const double cpyguess, const double cpzguess) 
+/// Estimate update value at idx
+/// \param[in] idx : location to estimate at
+/// \return          Estimated distance to interface
+double Redist3::estimateUpdate(idx_t const idx)
 {
-  //bool VERBOSITY = false;
-  //if(idx == 10634)
-  //  VERBOSITY = true;
-    
+  double a = std::min(std::abs(u.getxm(idx)), std::abs(u.getxp(idx)));
+  double b = std::min(std::abs(u.getym(idx)), std::abs(u.getyp(idx)));
+  double c = std::min(std::abs(u.getzm(idx)), std::abs(u.getzp(idx)));
+  ::sort(a,b,c);
+  assert((a<=b) && (b<=c));
+  double d;
+  if((b-a)>=dx)
+    d = a+dx;
+  else {
+    d = 0.5f * (a+b+sqrt(2.*dx*dx-(a-b)*(a-b)));
+    if(d > c)
+      d = 1./3. * (a+b+c+sqrt(3.*dx*dx+2.*(a*b+a*c+b*c-a*a-b*b-c*c)));
+  }
+  return(d*mysign(u[idx]));
+}
+
+/// Set values of output signed distance function at the interface
+void Redist3::setInterfaceValues()
+{ 
+  Array3D<int> sgn(u.getm(),u.getn(),u.getk());
+  std::vector<int> &vSgn = sgn.returnData();
+  std::vector<double> const &vu = u.returnData();
+  assert(vSgn.size() == vu.size());
+  std::transform(vu.begin(), vu.end(), vSgn.begin(), [](double const d)->int{ return static_cast<int>(mysign(d)); });
+  for(idx_t ii=0; ii<sgn.getN(); ++ii)
+    if ((sgn.getxp(ii)-sgn[ii]) || (sgn.getxm(ii)-sgn[ii]) ||
+        (sgn.getyp(ii)-sgn[ii]) || (sgn.getym(ii)-sgn[ii]) ||
+        (sgn.getzp(ii)-sgn[ii]) || (sgn.getzm(ii)-sgn[ii]))
+      bnd.push_back(ii);
+
+  std::vector<double> dr(bnd.size());
+  
+  std::transform(bnd.begin(), bnd.end(), dr.begin(), [&](idx_t const ii)->double {
+      // compute norm(grad u) with centered differences
+      double rx = (u.getxp(bnd[ii])-u.getxm(bnd[ii]))/dx/2.;
+      double ry = (u.getyp(bnd[ii])-u.getym(bnd[ii]))/dy/2.;
+      double rz = (u.getzp(bnd[ii])-u.getzm(bnd[ii]))/dz/2.;
+      double dr = sqrt(rx*rx+ry*ry+rz*rz);
+
+      // compute norm(grad u) with one-sided differences
+      rx = std::max(fabs(u.getxp(bnd[ii])-u.get(bnd[ii])),fabs(u.get(bnd[ii])-u.getxm(bnd[ii])))/dx;
+      ry = std::max(fabs(u.getyp(bnd[ii])-u.get(bnd[ii])),fabs(u.get(bnd[ii])-u.getym(bnd[ii])))/dy;
+      rz = std::max(fabs(u.getzp(bnd[ii])-u.get(bnd[ii])),fabs(u.get(bnd[ii])-u.getzm(bnd[ii])))/dz;
+      double const dr2 = sqrt(rx*rx+ry*ry+rz*rz);
+
+      // Accept one-sided difference is much different than centered difference
+      if((dr < (0.5*dr2)) || (dr > (2.0*dr2)))
+        dr = dr2;
+      return dr;
+    });
+  for(size_t ii=0; ii<bnd.size();++ii)
+    u[bnd[ii]] /= dr[ii];
+}
+
+/// Set the interface values for directional optimization (must have correct order of accuracy)
+void Redist3::setInterfaceValuesDO()
+{ 
+  double meanabsbndval = 0.;
+  for(idx_t ii=0; ii<N; ++ii) 
+    if(diffSign(ii)) {
+      bnd.push_back(ii);
+      meanabsbndval += std::abs(u0[ii]);
+    }
+
+  meanabsbndval /= static_cast<double>(bnd.size());
+  // rescale u0 based on meanabsbndval
+  u0 *= 0.5 * mymax3(dx,dy,dz) / meanabsbndval; // scale u0 (rationale: mean distance to interface at a grid cell should be ~ 0.5 dx)
+  
+  for (idx_t ind : bnd) {
+    Helt3 const bndval = performDOSurf(ind);
+    applyResult(bndval);
+    state.put(true, ind);
+  }
+}
+
+/// Initialize the values of output u away from the interface
+void Redist3::thresholdAwayFromInterface()
+{
+  state.fillWithValue(false);
+  for (idx_t ind : bnd)
+    state.put(true, ind);
+  for(size_t ii=0;ii<state.getN();++ii)
+    if(!state.get(ii))
+      u[ii] = mysign(u0[ii])*thres;
+}
+
+/// Perform the directional optimization routine
+void Redist3::directionalOptimization()
+{
+  setInterfaceValuesDO(); 
+  thresholdAwayFromInterface();
+
+  for (idx_t ind : bnd)
+    updateAndAddNeighborsToHeapDO(ind);
+
+  Helt3 helt;
+  while(h.popFromHeap(helt)) {
+    if(!state.get(helt.second.i) && (std::abs(helt.first) < thres)) {// don't update if outside threshold cutoff, or already fixed
+      applyResult(helt);
+      state.put(true, helt.second.i);
+      updateAndAddNeighborsToHeapDO(helt.second.i);
+    }
+  }
+}
+
+/// Update a single location with updated signed distance function value and closest point information if applicable
+/// \param[in] h : The heap element to update with
+void Redist3::applyResult(Helt3 const &h)
+{
+  u[h.second.i] = mysign(u0[h.second.i])*h.first;
+  if(flag > 1) {
+    cpx[h.second.i] = h.second.aux[0];
+    cpy[h.second.i] = h.second.aux[1];
+    cpz[h.second.i] = h.second.aux[2];
+  }
+}
+
+/// Perform directional optimization at a single location
+/// \param[in] idx : Location to perform directional optimization at
+/// \return          Heap element containing the directional optimization result
+Helt3 Redist3::performDO(idx_t const idx)
+{ // make a guess for interface location and call performDO(const int ind, const double *cpguess)
+  Point3 grad({pd(u.getxp(idx),u.getxm(idx)) / (2. * dx),
+        pd(u.getyp(idx),u.getym(idx)) / (2. * dy), 
+        pd(u.getzp(idx),u.getzm(idx)) / (2. * dz)});
+  Point3 cpguess = lineSearch(idx, grad);
+  return performDO(idx, cpguess);
+}
+
+/// Perform directional optimization near the interface
+/// \param[in] idx : Location to perform directional optimization at
+/// \return          Heap element containing the directional optimization result
+Helt3 Redist3::performDOSurf(idx_t const idx)
+{ // make a guess for interface location and call performDO
+  // make initial, gradient-based guess.
+  Point3 grad0({pdl(u0.getxp(idx),u0.getxm(idx),u0.lenx()) / (2. * dx),
+        pdl(u0.getyp(idx),u0.getym(idx),u0.leny()) / (2. * dy),
+        pdl(u0.getzp(idx),u0.getzm(idx),u0.lenz()) / (2. * dz)});
+  Point3 grad = grad0;
+  Point3 cpguess = lineSearch(idx,grad);
+  Helt3 h = performDO(idx, cpguess);
+
+  std::array<Point3, 26> grad2all({{{1., 0., 0.},
+      {-1., 0., 0.},
+      {0., 1., 0.},
+      {0., -1., 0.},
+      {0., 0., 1.},
+      {0., 0., -1.},
+      {1., 1., 0.},
+      {1., -1., 0.},
+      {1., 0., 1.},
+      {1., 0., -1.},
+      {-1., 1., 0.},
+      {-1., -1., 0.},
+      {-1., 0., 1.},
+      {-1., 0., -1.},
+      {0., 1., 1.},
+      {0., 1., -1.},
+      {0., -1., 1.},
+      {0., -1., -1.},
+      {1., 1., 1.},
+      {1., 1., -1.},
+      {1., -1., 1.},
+      {1., -1., -1.},
+      {-1., 1., 1.},
+      {-1., 1., -1.},
+      {-1., -1., 1.},
+      {-1., -1., -1.}}});
+  for (Point3 &grad2 : grad2all) {
+    if(std::inner_product(grad2.begin(), grad2.end(), grad0.begin(), 0.) >= 0.) {
+      Point3 cpguess2 = lineSearch(idx,grad2);
+      Helt3 const h1 = performDO(idx, cpguess2);
+      if( std::abs(h1.first) < std::abs(h.first) )
+        h = h1;
+    } 
+  }
+  return h;
+}
+
+/// Perform directional optimization at a single location
+/// \param[in] idx     : Location to perform directional optimization at
+/// \param[in] cpguess : Initial guess for closest point on the interface
+/// \return              Heap element containing the directional optimization result
+Helt3 Redist3::performDO(idx_t const idx, Point3 const &cpguess)
+{
   // optimize over directions via line search
-  const double x0[3] = {u.getX(idx), u.getY(idx), u.getZ(idx)};
-  const int MAXLOOPS = 5;
-  const int MAXSEARCHES = 5;
-  const double TOL = mymax( (0.01 / pow(mymax3(m,n,k),flag+1)), 5.0e-16) ;
-  const int NDIR = 5;
+  Point3 const x0({u.getX(idx), u.getY(idx), u.getZ(idx)});
+  unsigned int const MAXLOOPS = 5;
+  unsigned int const MAXSEARCHES = 5;
+  double const TOL = std::max( (0.01 / std::pow(mymax3(m,n,k),flag)), 5.0e-16);
+  
+  Point3 rvec, v1, v2;
+  PrPtD xdt;
+  std::array<PrPtD, 5> xxdd;
 
-  double xt[3], xx[5][3], rvec[3], v1[3], v2[3];
-  double dd[5], dt;
-  xx[0][0] = cpxguess;
-  xx[0][1] = cpyguess;
-  xx[0][2] = cpzguess;
-
-  dd[0] = dist3(x0,xx[0]);
-
-  //if(VERBOSITY)
-  //  printf(" xx[0] = (%f,%f,%f), dd[0] = %f\n",xx[0][0],xx[0][1],xx[0][2],dd[0]);
+  xxdd[0].first = cpguess;
+  xxdd[0].second = dist(x0, xxdd[0].first, u.lenx(), u.leny(), u.lenz());
 
   // set angle increment
   double delta;
-  if(dd[0] > mymax3(dx,dy,dz))
-    delta = asin(mymax3(dx,dy,dz)/dd[0]);
+  if(xxdd[0].second > mymax3(dx,dy,dz))
+    delta = std::asin(mymax3(dx,dy,dz)/xxdd[0].second);
   else // interface is nearby, look over a wide range
     delta = PI2;
-
-  //printf("  0.5.2\n"); fflush(stdout);
-
-  double nn = findNborDirections(x0,xx,delta,rvec,v1,v2);
-
-  //if(VERBOSITY)
-  //  printf(" after findNborDirections: xx[0] = (%f,%f,%f), dd[0] = %f\n",xx[0][0],xx[0][1],xx[0][2],dd[0]);
-
-  //printf("  0.5.3\n"); fflush(stdout);
   
+  double nn = findNborDirections(x0,xxdd,delta,rvec,v1,v2);
   // bracket the interface in the search directions
-  for(int ii=0; ii<NDIR; ++ii)
-    dd[ii] = search1D(idx,xx[ii]);
+  for (PrPtD &elt : xxdd)
+    elt.second = search1D(idx, elt.first);
 
-  //if(VERBOSITY)
-  //  printf(" after search1D: xx[0] = (%f,%f,%f), dd[0] = %f\n",xx[0][0],xx[0][1],xx[0][2],dd[0]);
+  auto const MinElt([](std::array<PrPtD, 5> const &xxdd)->std::array<PrPtD, 5>::const_iterator {
+      return std::min_element(xxdd.begin(), xxdd.end(),  [](std::pair<Point3, double> const &a, std::pair<Point3, double> const &b)->bool { return a.second < b.second; }); });
 
-  int minidx = minabs(dd,NDIR);
-
-  //if(VERBOSITY)
-  //  printf(" dd = [%f %f %f %f %f], minidx = %d\n",dd[0],dd[1],dd[2],dd[3],dd[4],minidx);
-
-  //printf("  0.5.4\n"); fflush(stdout);
-
-  for(int count0=0; count0<MAXLOOPS; ++count0)
+  auto it = MinElt(xxdd);
+  
+  for(unsigned int count0=0; count0<MAXLOOPS; ++count0)
   { // (1) center on minimum; (2) perform Newton step
-    int count = 0;
-    while( (minidx != 0) && (count < MAXSEARCHES))
-    {
+    unsigned int count = 0;
+    while( (it != xxdd.begin()) && (count++ < MAXSEARCHES)) {
       if(delta < PI4-1e-4)
-        delta *= 2.0f;
-      if(minidx == 1)
-      { xx[0][0] = xx[1][0]; xx[0][1] = xx[1][1]; xx[0][2] = xx[1][2]; dd[0] = dd[1];}
-      else if(minidx == 2) 
-      { xx[0][0] = xx[2][0]; xx[0][1] = xx[2][1]; xx[0][2] = xx[2][2]; dd[0] = dd[2];}
-      else if(minidx == 3) 
-      { xx[0][0] = xx[3][0]; xx[0][1] = xx[3][1]; xx[0][2] = xx[3][2]; dd[0] = dd[3];}
-      else /* (minidx == 4) */ 
-      { xx[0][0] = xx[4][0]; xx[0][1] = xx[4][1]; xx[0][2] = xx[4][2]; dd[0] = dd[4];}
+        delta *= 2.;
+      xxdd[0] = *it;
       /* update directions around new center location */
-      nn = findNborDirections(x0,xx,delta,rvec,v1,v2);
-      for(int ii=1; ii<NDIR; ++ii)
-        dd[ii] = search1D(idx,xx[ii]);
-      minidx = minabs(dd,NDIR);
-
-      //if(VERBOSITY)
-      //  printf(" count = %d, dd = [%f %f %f %f %f], minidx = %d\n",count,dd[0],dd[1],dd[2],dd[3],dd[4],minidx);
-      count++;
+      nn = findNborDirections(x0,xxdd,delta,rvec,v1,v2);
+      for (auto it2 = xxdd.begin()+1; it2 != xxdd.end(); ++it2)
+        it2->second = search1D(idx,it2->first);
+      it = MinElt(xxdd);
     }
     // perform Newton step only if dd values are successfully computed
-    if(mymax(mymax(dd[1],dd[2]),mymax(dd[3],dd[4])) < 0.9f)
-    {
-      double us = (dd[1]-dd[3])/2.0;
-      double uss= (dd[1]-2.0*dd[0]+dd[3]);
-      double ut = (dd[2]-dd[4])/2.0;
-      double utt= (dd[2]-2.0*dd[0]+dd[4]);
-      if(fabs(uss) < 1e-16)
+    if(std::max(std::max(xxdd[1].second,xxdd[2].second),std::max(xxdd[3].second,xxdd[4].second)) < 0.9f) {
+      double const us = (xxdd[1].second-xxdd[3].second)/2.0;
+      double const ut = (xxdd[2].second-xxdd[4].second)/2.0;
+      double uss= (xxdd[1].second-2.0*xxdd[0].second+xxdd[3].second);
+      double utt= (xxdd[2].second-2.0*xxdd[0].second+xxdd[4].second);
+      if(std::abs(uss) < 1e-16)
         uss = 1e-16;
-      if(fabs(utt) < 1e-16)
+      if(std::abs(utt) < 1e-16)
         utt = 1e-16;
-      double deltas = -us/uss*delta;
-      double deltat = -ut/utt*delta;
-      xt[0] = dinrange2(x0[0] + nn/2.0*(rvec[0]*cos(deltas)+v1[0]*sin(deltas)+rvec[0]*cos(deltat)+v2[0]*sin(deltat)));
-      xt[1] = dinrange2(x0[1] + nn/2.0*(rvec[1]*cos(deltas)+v1[1]*sin(deltas)+rvec[1]*cos(deltat)+v2[1]*sin(deltat)));
-      xt[2] = dinrange2(x0[2] + nn/2.0*(rvec[2]*cos(deltas)+v1[2]*sin(deltas)+rvec[2]*cos(deltat)+v2[2]*sin(deltat)));
-      dt = search1D(idx,xt);
-
-      if(fabs(dt-dd[0]) < TOL)
+      double const deltas = -us/uss*delta;
+      double const deltat = -ut/utt*delta;
+      xdt.first[0] = dinrange2(x0[0] + nn/2.0*(rvec[0]*cos(deltas)+v1[0]*sin(deltas)+rvec[0]*cos(deltat)+v2[0]*sin(deltat)));
+      xdt.first[1] = dinrange2(x0[1] + nn/2.0*(rvec[1]*cos(deltas)+v1[1]*sin(deltas)+rvec[1]*cos(deltat)+v2[1]*sin(deltat)));
+      xdt.first[2] = dinrange2(x0[2] + nn/2.0*(rvec[2]*cos(deltas)+v1[2]*sin(deltas)+rvec[2]*cos(deltat)+v2[2]*sin(deltat)));
+      xdt.second = search1D(idx,xdt.first);
+      
+      if(std::abs(xdt.second-xxdd[0].second) < TOL)
         count0 = MAXLOOPS; // no further improvement available
-      else if(dt<dd[0])
-      {
-        xx[0][0] = xt[0]; xx[0][1] = xt[1]; xx[0][2] = xt[2]; dd[0] = dt;
-      }
+      else if(xdt.second<xxdd[0].second) 
+        xxdd[0] = xdt;
     }
-    if(count0 < MAXLOOPS)
-    {
-      delta /= 2.0f;
-      nn = findNborDirections(x0,xx,delta,rvec,v1,v2);
-      for(int ii=0;ii<NDIR;ii++)
-        dd[ii] = search1D(idx,xx[ii]);
-      //if(VERBOSITY)
-      //  printf(" count0 = %d, dd = [%f %f %f %f %f], minidx = %d\n",count0,dd[0],dd[1],dd[2],dd[3],dd[4],minidx);
-
+    if(count0 < MAXLOOPS) {
+      delta /= 2.;
+      nn = findNborDirections(x0,xxdd,delta,rvec,v1,v2);
+      for (PrPtD &elt : xxdd)
+        elt.second = search1D(idx, elt.first);
     }
   }
-  struct helt lval;
-
-  //printf("  0.5.5\n"); fflush(stdout);
-  double val1 = u0.interpolate(xx[0][0],xx[0][1],xx[0][2]);
-  lval.i = idx;
-  lval.d = dd[0] + fabs(val1);
-  //if(VERBOSITY)
-  //  printf("   dd[0] = %f, val1 = %f\n",dd[0],val1);
-  lval.aux[0] = xx[0][0];
-  lval.aux[1] = xx[0][1];
-  lval.aux[2] = xx[0][2];
-  //printf("  0.5.6\n"); fflush(stdout);
-
-  return(lval);
+  return std::make_pair(xxdd[0].second + std::abs(u0.interpolate(xxdd[0].first[0],xxdd[0].first[1],xxdd[0].first[2])), Aux3(idx, xxdd[0].first));
 }
 
-void Redist3::lineSearch(const int idx, double (&grad)[3], double (&cpguess)[3])
+/// Perform a line search along the direction defined by grad for the inteface
+/// \param[in] idx      : Location of the element being worked on
+/// \param[in,out] grad : Direction to search in; normalized in-place
+/// \return               Guess at closest point location along this line
+Point3 Redist3::lineSearch(idx_t const idx, Point3 &grad)
 { // takes the given index at estimate of gradient direction (unnormalized)
   // and performs a line search along this direction for the interface.
   // Interface is expected to lie within one grid cell of idx
 
   normalize(grad);
   // get the correct direction to search in; 
-  if(u.get(idx) < 0.0f) // then we go uphill, keep gradient sign
-  {
+  if(u.get(idx) < 0.) { // then we go uphill, keep gradient sign
     grad[0] *= SQRT3/static_cast<double>(n);
     grad[1] *= SQRT3/static_cast<double>(m); 
     grad[2] *= SQRT3/static_cast<double>(k);
-  }
-  else // go downhill
-  {
+  } else { // go downhill
     grad[0] *= -SQRT3/static_cast<double>(n);
     grad[1] *= -SQRT3/static_cast<double>(m);
     grad[2] *= -SQRT3/static_cast<double>(k);
   }
-
   if(findOppSign(idx,grad))
-  {
-    cpguess[0] = grad[0]; cpguess[1] = grad[1]; cpguess[2] = grad[2];
-    bisect(idx,cpguess);
-  }
+    bisect(idx,grad);
   else // need to figure out where to look
   {
-    const int sgn = mysign(u.get(idx));
-    int nborind[18];
-    nborind[0] = u.xp(idx);
-    nborind[1] = u.xm(idx);
-    nborind[2] = u.yp(idx);
-    nborind[3] = u.ym(idx);
-    nborind[4] = u.zp(idx);
-    nborind[5] = u.zm(idx);
-    nborind[6] = u.yp(u.xp(idx));
-    nborind[7] = u.yp(u.xm(idx));
-    nborind[8] = u.ym(u.xp(idx));
-    nborind[9] = u.ym(u.xm(idx));
-    nborind[10] = u.zp(u.xp(idx));
-    nborind[11] = u.zp(u.xm(idx));
-    nborind[12] = u.zm(u.xp(idx));
-    nborind[13] = u.zm(u.xm(idx));
-    nborind[14] = u.zp(u.yp(idx));
-    nborind[15] = u.zp(u.ym(idx));
-    nborind[16] = u.zm(u.yp(idx));
-    nborind[17] = u.zm(u.ym(idx));
-
-    for(int ii=0;ii<18;++ii)
-    {
-      if(mysign(u.get(nborind[ii])) != sgn)
-      {
-        cpguess[0] = u.getX(nborind[ii]);
-        cpguess[1] = u.getY(nborind[ii]);
-        cpguess[2] = u.getZ(nborind[ii]);
+    int const sgn = mysign(u.get(idx));
+    std::array<idx_t,18> const nborind({u.xp(idx), u.xm(idx),
+          u.yp(idx), u.ym(idx),
+          u.zp(idx), u.zm(idx),
+          u.yp(u.xp(idx)), u.yp(u.xm(idx)),
+          u.ym(u.xp(idx)), u.ym(u.xm(idx)),
+          u.zp(u.yp(idx)), u.zp(u.ym(idx)),
+          u.zm(u.yp(idx)), u.zm(u.ym(idx)),
+          u.xp(u.zp(idx)), u.xp(u.zm(idx)),
+          u.xm(u.zp(idx)), u.xm(u.zm(idx))});
+    for (idx_t const ind : nborind) {
+      if(mysign(u[ind]) != sgn) {
+        Point3 cpguess({u.getX(ind), u.getY(ind), u.getZ(ind)});
         bisect(idx,cpguess);
-        return;
+        return cpguess;
       }
     }
   }
+  return grad;
 }
 
-bool Redist3::findOppSign(const int idx, double (&guess)[3])
+/// Find a point across the interface in direction of input guess
+/// \param[in]     idx   : Point to search for the interface from
+/// \param[in/out] guess : Input as search direction with distance estimate, return the point across the interface along this line
+/// \return                True if search succeeds
+bool Redist3::findOppSign(idx_t const idx, Point3 &guess)
 { // searches in the direction initially given by "guess" to find x s.t. u(x) has opposite sign
   // from from u(idx)
   // input suggests to look at u[y+guess], where y is spatial coordinates of idx. 
   // returns location x in guess.
-  const int sgn = mysign(u.get(idx));
+  int const sgn = mysign(u0[idx]);
+  Point3 inguess = guess;
 
-  double val1 = u0.interpolate(u.getX(idx)+guess[0],u.getY(idx)+guess[1],u.getZ(idx)+guess[2]);
-  if(sgn == mysign(val1)) // need to look harder!
+  for(int ii=1; ii<=5; ++ii)
   {
-    double val2 = u0.interpolate(u.getX(idx)+2.0f*guess[0],u.getY(idx)+2.0f*guess[1],u.getZ(idx)+2.0f*guess[2]);
-    if(sgn == mysign(val2)) // still need to do more work
-      return(false);
-    else
-    {
-      guess[0] = u.getX(idx)+2.0f*guess[0];
-      guess[1] = u.getY(idx)+2.0f*guess[1];
-      guess[2] = u.getZ(idx)+2.0f*guess[2];
-      return(true);
-    }
+    double const dd = static_cast<double>(ii);
+    guess[0] = dinrange2l(u0.getX(idx)+dd*inguess[0],u0.lenx());
+    guess[1] = dinrange2l(u0.getY(idx)+dd*inguess[1],u0.leny());
+    guess[2] = dinrange2l(u0.getZ(idx)+dd*inguess[2],u0.lenz());
+    double const val1 = u0.interpolate(guess[0],guess[1],guess[2]);
+    if(sgn != mysign(val1))
+      return true;
   }
-  else
-  {
-    guess[0] = u.getX(idx)+guess[0];
-    guess[1] = u.getY(idx)+guess[1];
-    guess[2] = u.getZ(idx)+guess[2];
-    return(true);
-  }
+  return false;
 }
 
-bool Redist3::bracket(const int idx, double (&cpguess)[3], double (&xm)[4], double (&xp)[4])
-{ // Look about location cpguess along line from idx and find (small) positive and negative values as
-  // input to bisection.
-  
+/// Look about location cpguess along line from idx and find (small) positive and negative values as input to bisection.
+/// \param[in]  idx     : Element to search from 
+/// \param[in]  cpguess : Point across interface from this location
+/// \param[out] xm      : Location with negative distance value near the interface along the line between point corersponding to idx and cpguess
+/// \param[out] xp      : Location with positive distance value near the interface along the line between point corersponding to idx and cpguess
+/// \return               True if the bracketing procedure succeeds
+bool Redist3::bracket(idx_t const idx, Point3 const &cpguess, BracketPair3 &xm, BracketPair3 &xp)
+{
   // Returns false if it's much further than initially guessed to interface in this direction (e.g. more
   // than one grid cell further), and true otherwise.
   // Assumed that xm, xp, both have room for two doubles
 
-  //bool VERBOSITY = false;
-  //if(idx == 10634)
-  //  VERBOSITY = true;
-
-  const double x0[3] = {u.getX(idx), u.getY(idx), u.getZ(idx)};
-  const double uv0 = u.get(idx);
-  if(mysign(uv0) == 0) // already on interface
-  {
-    xm[0] = x0[0]; xm[1] = x0[1]; xm[2] = x0[2]; xm[3] = uv0;
-    xp[0] = x0[0]; xp[1] = x0[1]; xp[2] = x0[2]; xp[3] = uv0;
-    return(true);
+  Point3 const x0({u.getX(idx), u.getY(idx), u.getZ(idx)});
+  double const uv0 = u0[idx];
+  if(mysign(uv0) == 0) { // already on interface
+    xm = std::make_pair(x0, uv0);
+    xp = xm;
+    return true;
   }
 
-  double dir[3];
-  dir[0] = pd(cpguess[0],x0[0]);
-  dir[1] = pd(cpguess[1],x0[1]);
-  dir[2] = pd(cpguess[2],x0[2]);
+  Point3 dir({pdl(cpguess[0],x0[0],u.lenx()), pdl(cpguess[1],x0[1],u.leny()), pdl(cpguess[2],x0[2],u.lenz())});
   normalize(dir);
 
   double ug = u0.interpolate(cpguess[0],cpguess[1],cpguess[2]);
-  if(mysign(uv0 * ug) == 0) // sign(ug) == 0; 
-  {
-    xm[0] = cpguess[0]; xm[1] = cpguess[1]; xm[2] = cpguess[2]; xm[3] = ug;
-    xp[0] = cpguess[0]; xp[1] = cpguess[1]; xp[2] = cpguess[2]; xp[3] = ug;
-    return(true);
+  if(mysign(uv0 * ug) == 0) { // sign(ug) == 0;
+    xm = std::make_pair(cpguess, ug);
+    xp = xm;
+    return true;
   }
-  if(mysign(uv0 * ug) == 1) // same side of interface
-  {
-    double dr = mymax3(dx,dy,dz);
-    double ug2 = u0.interpolate(cpguess[0]+dir[0]*dr,cpguess[1]+dir[1]*dr,cpguess[2]+dir[2]*dr);
+  double const dr = mymax3(dx,dy,dz);
+  if(mysign(uv0 * ug) == 1) { // same side of interface
+    double const ug2 = u0.interpolate(cpguess[0]+dir[0]*dr,cpguess[1]+dir[1]*dr,cpguess[2]+dir[2]*dr);
     if(mysign(uv0 * ug2) == 1) // still on same side of interface
-      return(false);
-    else
-    {
-      if(mysign(ug) == 0)
-      {
-        if(mysign(ug2) == 1)
-        {
-          xp[0] = cpguess[0]+dir[0]*dr; xp[1] = cpguess[1]+dir[1]*dr; xp[2] = cpguess[2]+dir[2]*dr; xp[3] = ug2;
-          xm[0] = cpguess[0]; xm[1] = cpguess[1]; xm[2] = cpguess[2]; xm[3] = ug;
-        }
-        else
-        {
-          xp[0] = cpguess[0]; xp[1] = cpguess[1]; xp[2] = cpguess[2]; xp[3] = ug;
-          xm[0] = cpguess[0]+dir[0]*dr; xm[1] = cpguess[1]+dir[1]*dr; xm[2] = cpguess[2]+dir[2]*dr; xm[3] = ug2;
-        }
-      }
-      else if(mysign(ug) == 1)
-      {
-        xp[0] = cpguess[0]; xp[1] = cpguess[1]; xp[2] = cpguess[2]; xp[3] = ug;
-        xm[0] = cpguess[0]+dir[0]*dr; xm[1] = cpguess[1]+dir[1]*dr; xm[2] = cpguess[2]+dir[2]*dr; xm[3] = ug2;
-      }
-      else // mysign(ug) == -1
-      {
-        xp[0] = cpguess[0]+dir[0]*dr; xp[1] = cpguess[1]+dir[1]*dr; xp[2] = cpguess[2]+dir[2]*dr; xp[3] = ug2;
-        xm[0] = cpguess[0]; xm[1] = cpguess[1]; xm[2] = cpguess[2]; xm[3] = ug;
-      }
-      return(true);
+      return false;
+    else {
+      xp = std::make_pair(cpguess, ug);
+      xm = std::make_pair(Point3({cpguess[0]+dir[0]*dr, cpguess[1]+dir[1]*dr, cpguess[2]+dir[2]*dr}), ug2);
+      if ( (mysign(ug)==-1) || ((mysign(ug)==0) && (mysign(ug2)==-1)) )
+        std::swap(xp,xm);
+      return true;
     }
-  }
-  else // x0 and cpguess are on opposite sides of interface, work backwards
-  {
-    double dr = mymax3(dx,dy,dz);
-    double xx,yy,zz;
-    xx = cpguess[0]-dir[0]*dr;
-    yy = cpguess[1]-dir[1]*dr;
-    zz = cpguess[2]-dir[2]*dr;
-    double ug2 = u0.interpolate(xx,yy,zz);
-    int tries = 0;
-    while((mysign(ug*ug2) == 1) && (tries < 10))
-    {
-      xx -= dir[0]*dr;
-      yy -= dir[1]*dr;
-      zz -= dir[2]*dr;
-      ug2 = u0.interpolate(xx,yy,zz);
-      tries++;
+  } else { // x0 and cpguess are on opposite sides of interface, work backwards
+    Point3 xyz({cpguess[0]-dir[0]*dr, cpguess[1]-dir[1]*dr, cpguess[2]-dir[2]*dr});
+    double ug2 = u0.interpolate(xyz[0],xyz[1],xyz[2]);
+    unsigned int tries = 0;
+    while((mysign(ug*ug2) == 1) && (tries++ < 10)) {
+      xyz[0] -= dir[0]*dr;
+      xyz[1] -= dir[1]*dr;
+      xyz[2] -= dir[2]*dr;
+      ug2 = u0.interpolate(xyz[0],xyz[1],xyz[2]);
     }
     if(tries == 10)
       return(false);
 
-    if(mysign(ug) == 1)
-    {
-      xp[0] = cpguess[0]; xp[1] = cpguess[1]; xp[2] = cpguess[2]; xp[3] = ug;
-      xm[0] = xx; xm[1] = yy; xm[2] = zz; xm[3] = ug2;
-    }
-    else if(mysign(ug) == -1)
-    {
-      xp[0] = xx; xp[1] = yy; xp[2] = zz; xp[3] = ug2;
-      xm[0] = cpguess[0]; xm[1] = cpguess[1]; xm[2] = cpguess[2]; xm[3] = ug;
-    }
-    else // mysign(ug) == 0
-    {
-      if(mysign(ug2) == 1)
-      {
-        xp[0] = xx; xp[1] = yy; xp[2] = zz; xp[3] = ug2;
-        xm[0] = cpguess[0]; xm[1] = cpguess[1]; xm[2] = cpguess[2]; xm[3] = ug;
-      }
-      else
-      {
-        xp[0] = cpguess[0]; xp[1] = cpguess[1]; xp[2] = cpguess[2]; xp[3] = ug;
-        xm[0] = xx; xm[1] = yy; xm[2] = zz; xm[3] = ug2;
-      }
-    }
-    return(true);
+    xp = std::make_pair(cpguess, ug);
+    xm = std::make_pair(xyz, ug2);
+    if ( (mysign(ug)==-1) || ((mysign(ug)==0) && (mysign(ug2)==1)) )
+      std::swap(xp,xm);
+    return true;
   }
 }
 
-void Redist3::bisect(const int idx, double (&guess)[3])
-{ // bisection without Newton
-  const int NTRIES = 10;
-  // Assumes that u[idx] and u[guess] have different signs.
-  // Tries to find the zero between u[idx] and u[guess] by bisection.
-  
-  double xm[3], xp[3], xt[3];
+///  Tries to find the zero between [idx] and (guess) by simple linear approximation. Assumes that u0[idx] and u[guess] have different signs.
+/// \param[in]     idx   : Location to search from
+/// \param[in,out] guess : Initial location across the interface, returns as location of the interface along this line
+void Redist3::bisect(idx_t const idx, Point3 &guess)
+{ 
+  Point3 xm, xp;
   double um, up;
-  assert(mysign(u.get(idx)*u0.interpolate(guess[0],guess[1],guess[2])) != 1);
+  assert(mysign(u0[idx]*u0.interpolate(guess[0],guess[1],guess[2])) != 1);
 
-  if(mysign(u.get(idx)) == 0)
-  {
-    guess[0] = u.getX(idx);
-    guess[1] = u.getY(idx);
-    guess[2] = u.getZ(idx);
+  if(mysign(u0[idx]) == 0) {
+    guess = {u.getX(idx), u.getY(idx), u.getZ(idx)};
     return;
+  } else if(mysign(u0[idx]) == 1) {
+    xp = {u.getX(idx), u.getY(idx), u.getZ(idx)};
+    up = u0[idx];
+    xm = guess;
+    um = u0.interpolate(xm[0],xm[1],xm[2]);
+  } else {
+    xm = {u.getX(idx), u.getY(idx), u.getZ(idx)};
+    um = u0[idx];
+    xp = guess;
+    up = u0.interpolate(xp[0],xp[1],xp[2]);
+    if(up <= -1.0e-15)
+      std::cout << " up = " << up << ", um = " << um << std::endl;
   }
-  else if(mysign(u.get(idx)) == 1)
-  {
-    xp[0] = u.getX(idx); xp[1] = u.getY(idx); xp[2] = u.getZ(idx); up = u.get(idx);
-    xm[0] = guess[0];    xm[1] = guess[1];    xm[2] = guess[2];    um = u0.interpolate(xm[0],xm[1],xm[2]);
-  }
-  else
-  {
-    xm[0] = u.getX(idx); xm[1] = u.getY(idx); xm[2] = u.getZ(idx); um = u.get(idx);
-    xp[0] = guess[0];    xp[1] = guess[1];    xp[2] = guess[2];    up = u0.interpolate(xp[0],xp[1],xp[2]);
 
-    if(up <= 0.0f)
-      printf(" up = %e, um = %e\n",up,um);
-  }
-  if(up==um)
-  {
-    guess[0] = xp[0]; guess[1] = xp[1]; guess[2] = xp[2];
+  if(up==um) {
+    guess = xp;
     return;
   }
   if(std::isnan(up/(up-um)))
   {
-    printf(" up = %.3e, um = %.3e. Setting um = -1.0f.\n",up,um);
-    um = -1.0f;
+    std::cout << " up = " << up << ", um = " << um << ". Setting um = -1" << std::endl;
+    um = -1.;
   }
-  ccomb(xm,xp,xt,up/(up-um));
-  assert(up>=0.0f); 
-  assert(um<=0.0f);
-  for(int ii=0; ii<NTRIES; ++ii)
-  {
-    double ut = u0.interpolate(xt[0],xt[1],xt[2]);
-    if(mysign(ut) == 1)
-    {
-      xp[0] = xt[0]; xp[1] = xt[1]; xp[2] = xt[2]; up = ut;
-    }
-    else
-    {
-      xm[0] = xt[0]; xm[1] = xt[1]; xm[2] = xt[2]; um = ut;
-    }
-    if(std::isnan(up/(up-um)))
-    {
-      printf(" up = %.4e, um = %.4e, setting up = 1.0f\n",up,um);
-      up = 1.0f;
-    }
-    ccomb(xm,xp,xt,up/(up-um));
-    assert(up>=0.0f); 
-    assert(um<=0.0f);
-  }
-  guess[0] = xt[0];
-  guess[1] = xt[1];
-  guess[2] = xt[2];
+  Point3 xt = ccomb(xm,xp,up/(up-um),u0.lenx(),u0.leny(),u0.lenz());
+  assert(up>=0.); 
+  assert(um<=0.);
+  guess = xt;
   return;
 }
 
-double Redist3::bisect(double (&result)[3], double (&xm)[4], double (&xp)[4])
+///  Tries to find the zero between xp and xm by simple linear approximation. Assumes that u(xp) and u(xm) have different signs.
+/// \param[out] result : Closest point location approximation
+/// \param[in]  xm     : Negative side location and distance function value
+/// \param[in]  xp     : Positive side location and distance function value
+/// \return              Interpolation value at result location
+double Redist3::bisect(Point3 &result, BracketPair3 const &xm, BracketPair3 const &xp)
 { // bisection with linear approximation
-  const int NTRIES = 10;
-  const double UTOL = 1e-14;
-  const double XTOL = 5e-16;
-  // Assumes that u[idx] and u[guess] have different signs.
-  // Tries to find the zero between u[idx] and u[guess] by bisection.
-  double up = xp[3]; //u0.interpolate(xp[0],xp[1],xp[2]);
-  double um = xm[3]; //u0.interpolate(xm[0],xm[1],xm[2]);
-  double xt[3];
-  assert(up>=0.0f); 
-  assert(um<=0.0f);
-  if(up==um)
-  {
-    result[0] = xp[0]; result[1] = xp[1]; result[2] = xp[2];
+  double up = xp.second; //u0.interpolate(xp[0],xp[1]);
+  double um = xm.second; //u0.interpolate(xm[0],xm[1]);
+  assert(up>=0.); 
+  assert(um<=0.);
+  if(up==um) {
+    result = xp.first;
     return(up);
   }
-  ccomb(xm,xp,xt,up/(up-um));
-  double ut = u0.interpolate(xt[0],xt[1],xt[2]); 
-  for(int ii=0; ii<NTRIES; ++ii)
-  {
-    if(mysign(ut) == 0)
-    {
-      result[0] = xt[0]; result[1] = xt[1]; result[2] = xt[2];
-      return(ut);
-    }
-    else if(mysign(ut) == 1)
-    {
-      xp[0] = xt[0]; xp[1] = xt[1]; xp[2] = xt[2]; up = ut;
-    }
-    else
-    {
-      xm[0] = xt[0]; xm[1] = xt[1]; xm[2] = xt[2]; um = ut;
-    }
-    ccomb(xm,xp,xt,up/(up-um));
-    assert(up>=0.0f); 
-    assert(um<=0.0f);
-    if(dist3(xp,xm) < XTOL)
-      break;
-    ut = u0.interpolate(xt[0],xt[1],xt[2]); 
-    if(mysigntol(ut,UTOL) == 0)
-      break;
-  }
-  result[0] = xt[0]; result[1] = xt[1]; result[2] = xt[2];
-  return(ut);
+  result = ccomb(xm.first, xp.first, up/(up-um), u0.lenx(), u0.leny(), u0.lenz());
+  return u0.interpolate(result[0],result[1],result[2]); 
 }
 
-double Redist3::findNborDirections(const double (&x0)[3], double (&xx)[5][3], const double delta, double (&rvec)[3], double (&v1)[3], double (&v2)[3])
+/// Find directions at angles +/- delta from vector xc-x0 with same length
+/// \param[in]     x0    : Initial point
+/// \param[in,out] xxdd  : Initial search direction, and array of search points as return
+/// \param[in]     delta : Angle to sweep through
+/// \param[out]    rvec  : ONB vector in direction of xxdd[0].first - x0
+/// \param[out]    v1    : ONB vector
+/// \param[out]    v2    : ONB vector
+/// \return Length of xxdd[0].first - x0
+double Redist3::findNborDirections(Point3 const &x0, std::array<PrPtD, 5> &xxdd, double const delta, Point3 &rvec, Point3 &v1, Point3 &v2)
 {
-  double s,c,nn;
-  s = sin(delta);
-  c = cos(delta);
+  double const s = std::sin(delta);
+  double const c = std::cos(delta);
 
-  rvec[0] = pd(xx[0][0],x0[0]);
-  rvec[1] = pd(xx[0][1],x0[1]);
-  rvec[2] = pd(xx[0][2],x0[2]);
-  nn = mymax(sqrt(rvec[0]*rvec[0]+rvec[1]*rvec[1]+rvec[2]*rvec[2]), 1e-16);
+  rvec[0] = pdl(xxdd[0].first[0],x0[0],u.lenx());
+  rvec[1] = pdl(xxdd[0].first[1],x0[1],u.leny());
+  rvec[2] = pdl(xxdd[0].first[2],x0[2],u.lenx());
+  double const nn = std::max(sqrt(rvec[0]*rvec[0]+rvec[1]*rvec[1]+rvec[2]*rvec[2]), 1e-16);
   normalize(rvec);
   orthoVecs(rvec,v1,v2);
-
-  xx[1][0] = dinrange2(x0[0] + nn*(rvec[0]*c+v1[0]*s));
-  xx[1][1] = dinrange2(x0[1] + nn*(rvec[1]*c+v1[1]*s));
-  xx[1][2] = dinrange2(x0[2] + nn*(rvec[2]*c+v1[2]*s));
-  xx[2][0] = dinrange2(x0[0] + nn*(rvec[0]*c+v2[0]*s));
-  xx[2][1] = dinrange2(x0[1] + nn*(rvec[1]*c+v2[1]*s));
-  xx[2][2] = dinrange2(x0[2] + nn*(rvec[2]*c+v2[2]*s));
-  xx[3][0] = dinrange2(x0[0] + nn*(rvec[0]*c-v1[0]*s));
-  xx[3][1] = dinrange2(x0[1] + nn*(rvec[1]*c-v1[1]*s));
-  xx[3][2] = dinrange2(x0[2] + nn*(rvec[2]*c-v1[2]*s));
-  xx[4][0] = dinrange2(x0[0] + nn*(rvec[0]*c-v2[0]*s));
-  xx[4][1] = dinrange2(x0[1] + nn*(rvec[1]*c-v2[1]*s));
-  xx[4][2] = dinrange2(x0[2] + nn*(rvec[2]*c-v2[2]*s));
+  
+  xxdd[1].first[0] = dinrange2l(x0[0] + nn*(rvec[0]*c+v1[0]*s), u.lenx());
+  xxdd[1].first[1] = dinrange2l(x0[1] + nn*(rvec[1]*c+v1[1]*s), u.leny());
+  xxdd[1].first[2] = dinrange2l(x0[2] + nn*(rvec[2]*c+v1[2]*s), u.lenz());
+  xxdd[2].first[0] = dinrange2l(x0[0] + nn*(rvec[0]*c+v2[0]*s), u.lenx());
+  xxdd[2].first[1] = dinrange2l(x0[1] + nn*(rvec[1]*c+v2[1]*s), u.leny());
+  xxdd[2].first[2] = dinrange2l(x0[2] + nn*(rvec[2]*c+v2[2]*s), u.lenz());
+  xxdd[3].first[0] = dinrange2l(x0[0] + nn*(rvec[0]*c-v1[0]*s), u.lenx());
+  xxdd[3].first[1] = dinrange2l(x0[1] + nn*(rvec[1]*c-v1[1]*s), u.leny());
+  xxdd[3].first[2] = dinrange2l(x0[2] + nn*(rvec[2]*c-v1[2]*s), u.lenz());
+  xxdd[4].first[0] = dinrange2l(x0[0] + nn*(rvec[0]*c-v2[0]*s), u.lenx());
+  xxdd[4].first[1] = dinrange2l(x0[1] + nn*(rvec[1]*c-v2[1]*s), u.leny());
+  xxdd[4].first[2] = dinrange2l(x0[2] + nn*(rvec[2]*c-v2[2]*s), u.lenz());
   return(nn);
 }
 
-double Redist3::search1D(const int idx, double (&x)[3])
+/// Perform the 1D search for the interface from point at idx in direction of x
+/// \param[in]     idx : Point to compute distance from
+/// \param[in,out] x   : Initial search point, returns the interface point in this direction
+/// \return              Distance to interface point in this direction
+double Redist3::search1D(idx_t const idx, Point3 &x)
 {
-  //bool VERBOSITY = false;
-  //if(idx == 10634)
-  //  VERBOSITY = true;
-
   // bracket the interface in the search directions
-  double  x0[3], xm[4], xp[4]; // xm and xp also return values from u0
-  bool gl = bracket(idx,x,xm,xp);
-
-  //if(VERBOSITY)
-  //  printf("gl = %d\n",static_cast<int>(gl));
-
-  double d;
-
-  x0[0] = u.getX(idx); x0[1] = u.getY(idx); x0[2] = u.getZ(idx);
-  // once bracketed successfully, bisect
-  if(gl)
-  {
-    double val1 = bisect(x,xm,xp);
-    d = dist3(x0,x);
-    d += val1 * mysign(u.get(idx));
+  BracketPair3 xm, xp; // xm and xp also return values from u0
+  if (bracket(idx,x,xm,xp)) {
+    double const val1 = bisect(x,xm,xp);
+    Point3 const x0({u.getX(idx), u.getY(idx), u.getZ(idx)});
+    return dist(x0,x,u.lenx(),u.leny(),u.lenz()) + val1 * mysign(u0[idx]);
   }
-  else
-    d = 1.0f;
-  return(d);
+  return mymax3(u.lenx(), u.leny(), u.lenz());
 }
 
+/// Write u out to a pointer (e.g., for MATLAB)
+/// \param[out] v : Double array to write to. Memory assumed to be pre-allocated
+/// \todo Fix this function / memcpy
 void Redist3::dump_u(double *v)
 { // assumes sufficient memory is allocated into v
-  for(int ii=0; ii<N; ++ii)
-    v[ii] = u.get(ii);
+  std::memcpy(v, u.returnData().data(), N * sizeof(double));
 }
 
 void Redist3::dump_cp(double *cpx_d, double *cpy_d, double *cpz_d)
 { // assume sufficient memory is allocated into cpx, cpy, cpz
-  for(int ii=0; ii<N; ++ii)
-    cpx_d[ii] = cpx.get(ii);
-  for(int ii=0; ii<N; ++ii)
-    cpy_d[ii] = cpy.get(ii);
-  for(int ii=0; ii<N; ++ii)
-    cpz_d[ii] = cpz.get(ii);
+  std::memcpy(cpx_d, cpx.returnData().data(), N * sizeof(double));
+  std::memcpy(cpy_d, cpy.returnData().data(), N * sizeof(double));
+  std::memcpy(cpz_d, cpz.returnData().data(), N * sizeof(double));
 }
 
+/// Perform second order iterations for non-directional optimization -- NOT enabled
 void Redist3::secondOrderIterations()
 {
-  // currently, do nothing.
-/*
-  const double me = 1.0f/ 10000.0f / static_cast<double>(n);
-  const double thres2 = thres - dx;
-  const double dt = 1.0f / 5.0f / static_cast<double>(n);
-  // Step 1: Figure out which indices to do the iterations on
-  vector<int> idxc;
-  for(int ii=0; ii<N; ++ii)
-    if(fabs(u.get(ii)) < thres2)
-      idxc.push_back(ii);
-  
-  double *G = new double[idxc.size()];
-  bool *df = new bool[idxc.size()];
-  for(size_t ii=0; ii<idxc.size(); ++ii)
-    df[ii] = diffSign(idxc[ii]);
-
-  const int iter2o = 3*width;
-  for(int iter=1; iter<=iter2o; ++iter)
-  {
-    for(size_t ii=0; ii<idxc.size(); ++ii)
-      if(!(df[ii]))
-      {
-        const int jj = idxc[ii];
-        const double ujj = u.get(jj);
-
-        double t0[5],t1[4],t2[4],t3[4];
-        // x
-        t0[0] = u.getxm(u.xm(jj));
-        t0[1] = u.getxm(jj);
-        t0[2] = ujj;
-        t0[3] = u.getxp(jj);
-        t0[4] = u.getxp(u.xp(jj));
-        t1[0] = dx; t1[1] = dx; t1[2] = dx; t1[3] = dx;
-        if((mysigntol(t0[0],me)*mysigntol(t0[1],me))==-1)
-        {
-          t1[0] = dx * t0[1] / (t0[1]-t0[0]);
-          t0[0] = 0.0f;
-        }
-        if((mysigntol(t0[3],me)*mysigntol(t0[4],me))==-1)
-        {
-          t1[3] = -dx * t0[3] / (t0[4]-t0[3]);
-          t0[4] = 0.0f;
-        }
-        
-        t2[0] = (t0[1]-t0[0]) / t1[0];
-        t2[1] = (t0[2]-t0[1]) / t1[1];
-        t2[2] = (t0[3]-t0[2]) / t1[2];
-        t2[3] = (t0[4]-t0[3]) / t1[3];
-        t3[0] = (t2[1]-t2[0]) / (t1[1]+t1[0]);
-        t3[1] = (t2[2]-t2[1]) / (t1[2]+t1[1]);
-        t3[2] = (t2[3]-t2[2]) / (t1[3]+t1[2]);
-        double a = t2[1]+mm(t3[0],t3[1])*t1[1];
-        double b = t2[2]-mm(t3[1],t3[2])*t1[2];          
-        
-        // y
-        t0[0] = u.getym(u.ym(jj));
-        t0[1] = u.getym(jj);
-        t0[2] = ujj;
-        t0[3] = u.getyp(jj);
-        t0[4] = u.getyp(u.yp(jj));
-        t1[0] = dy; t1[1] = dy; t1[2] = dy; t1[3] = dy; 
-        if((mysigntol(t0[0],me)*mysigntol(t0[1],me))==-1)
-        {
-          t1[0] = dy * t0[1] / (t0[1]-t0[0]);
-          t0[0] = 0.0f;
-        }
-        if((mysigntol(t0[3],me)*mysigntol(t0[4],me))==-1)
-        {
-          t1[3] = -dy * t0[3] / (t0[4]-t0[3]);
-          t0[4] = 0.0f;
-        }
-        
-        t2[0] = (t0[1]-t0[0]) / t1[0];
-        t2[1] = (t0[2]-t0[1]) / t1[1];
-        t2[2] = (t0[3]-t0[2]) / t1[2];
-        t2[3] = (t0[4]-t0[3]) / t1[3];
-        t3[0] = (t2[1]-t2[0]) / (t1[1]+t1[0]);
-        t3[1] = (t2[2]-t2[1]) / (t1[2]+t1[1]);
-        t3[2] = (t2[3]-t2[2]) / (t1[3]+t1[2]);
-        double c = t2[1]+mm(t3[0],t3[1])*t1[1];
-        double d = t2[2]-mm(t3[1],t3[2])*t1[2];          
-        
-        if(ujj > me)
-          G[ii] = sqrt(mymax((static_cast<double>(a>0.0f))*a*a,(static_cast<double>(b<0.0f))*b*b) +
-                       mymax((static_cast<double>(c>0.0f))*c*c,(static_cast<double>(d<0.0f))*d*d)) - 1.0f;
-        else if(ujj < -me)
-          G[ii] = sqrt(mymax((static_cast<double>(a<0.0f))*a*a,(static_cast<double>(b>0.0f))*b*b) +
-                       mymax((static_cast<double>(c<0.0f))*c*c,(static_cast<double>(d>0.0f))*d*d)) - 1.0f;
-        else
-          G[ii] = 0.0f;
-      } // if non-interface cell - compute values to update
-    for(size_t ii=0; ii<idxc.size(); ++ii)
-      if(!(df[ii])) // update all non-interface cells simultaneously
-        u.put(u.get(idxc[ii])-dt*mysign(u.get(idxc[ii]))*G[ii],idxc[ii]);
-  } // 2nd order iterations
-  delete[] G;
-*/
+  if (!bWarn) {
+    std::cout << "WARNING: secondOrderIterations are not enabled in 3D." << std::endl;
+    bWarn = true;
+  }
 }
 
-bool Redist3::diffSign(int idx)
-{ // return true if sign of u[idx] differs from sign of any of its 6 first neighbors
-  const double ui = u.get(idx);
-  if(mysign(ui) != mysign(u.getxp(idx)))
-    return(true);
-  if(mysign(ui) != mysign(u.getyp(idx)))
-    return(true);
-  if(mysign(ui) != mysign(u.getzp(idx)))
-    return(true);
-  if(mysign(ui) != mysign(u.getxm(idx)))
-    return(true);
-  if(mysign(ui) != mysign(u.getym(idx)))
-    return(true);
-  if(mysign(ui) != mysign(u.getzm(idx)))
-    return(true);
-  return(false);
+/// Return true if sign of u[idx] differs from sign of any of its 4 neighbors
+/// \param[in] idx : Location to compare signs around
+/// \return          True if any four-neighbor of idx has different signs in u0 feom u0[idx]
+bool Redist3::diffSign(idx_t const idx)
+{
+  int const sui = mysign(u[idx]);
+  return (sui != mysign(u.getxp(idx))) || (sui != mysign(u.getxm(idx))) ||
+    (sui != mysign(u.getym(idx))) || (sui != mysign(u.getym(idx))) ||
+    (sui != mysign(u.getzp(idx))) || (sui != mysign(u.getzm(idx)));
 }
+
+/// Return a const reference to the signed distance function
+/// \return Const reference to the signed distance function
+Array3D<double> const& Redist3::dump_u()
+{
+  return u;
+}
+

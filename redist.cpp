@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <cassert>
+#include <cstring>
 
 using BracketPair = std::pair<Point, double>;
 
@@ -25,7 +26,7 @@ Aux::Aux(idx_t const _i) :
 /// \param[in] _u     : Input level set function
 /// \param[in] _width : Thresholding width (pixels)
 /// \param[in] _flag  : Interpolation order flag
-Redist::Redist(const Array2D<double> &_u, const int _width, const int _flag) :
+Redist::Redist(Array2D<double> const &_u, idx_t const _width, int const _flag) :
   Redist(_u, 1./static_cast<double>(n), 1./static_cast<double>(m), _width, _flag)
 { }
 
@@ -35,7 +36,7 @@ Redist::Redist(const Array2D<double> &_u, const int _width, const int _flag) :
 /// \param[in] _dy    : y grid spacing
 /// \param[in] _width : Thresholding width (pixels)
 /// \param[in] _flag  : Interpolation order flag
-Redist::Redist(const Array2D<double> &_u, const double _dx, const double _dy, const int _width, const int _flag) :
+Redist::Redist(Array2D<double> const &_u, double const _dx, double const _dy, idx_t const _width, int const _flag) :
   width(_width),
   flag(_flag),
   m(_u.getm()),
@@ -43,7 +44,7 @@ Redist::Redist(const Array2D<double> &_u, const double _dx, const double _dy, co
   N(m*n),
   dx(_dx),
   dy(_dy),
-  thres(static_cast<double>(width+1)*mymax(dx,dy)),
+  thres(static_cast<double>(width+1)*std::max(dx,dy)),
   cpflag((_flag==2) || (_flag==3)),
   h(10*width,cpflag),
   state(m,n),
@@ -151,21 +152,21 @@ void Redist::setInterfaceValues()
   assert(vSgn.size() == vu.size());
   std::transform(vu.begin(), vu.end(), vSgn.begin(), [](double const d)->int{ return static_cast<int>(mysign(d)); });
   for(idx_t ii=0; ii<sgn.getN(); ++ii)
-    if((std::abs(sgn.getxp(ii)-sgn[ii]) + std::abs(sgn.getxm(ii)-sgn[ii]) +
-        std::abs(sgn.getyp(ii)-sgn[ii]) + std::abs(sgn.getym(ii)-sgn[ii]))>0)
+    if ((sgn.getxp(ii)-sgn[ii]) || (sgn.getxm(ii)-sgn[ii]) ||
+        (sgn.getyp(ii)-sgn[ii]) || (sgn.getym(ii)-sgn[ii]))
       bnd.push_back(ii);
  
   std::vector<double> dr(bnd.size());
   
   std::transform(bnd.begin(), bnd.end(), dr.begin(), [&](idx_t const ii)->double {
       // compute norm(grad u) with centered differences
-      double ry = (u.getyp(ii)-u.getym(ii))/dy/2.0f;
-      double rx = (u.getxp(ii)-u.getxm(ii))/dx/2.0f;
+      double ry = (u.getyp(ii)-u.getym(ii))/dy/2.;
+      double rx = (u.getxp(ii)-u.getxm(ii))/dx/2.;
       double dr = sqrt(rx*rx+ry*ry);
 
       // compute norm(grad u) with one-sided differences
-      rx = mymax(std::abs(u.getxp(ii)-u[ii]),std::abs(u[ii]-u.getxm(ii)))/dx;
-      ry = mymax(std::abs(u.getyp(ii)-u[ii]),std::abs(u[ii]-u.getym(ii)))/dy;
+      rx = std::max(std::abs(u.getxp(ii)-u[ii]),std::abs(u[ii]-u.getxm(ii)))/dx;
+      ry = std::max(std::abs(u.getyp(ii)-u[ii]),std::abs(u[ii]-u.getym(ii)))/dy;
       double const dr2 = sqrt(rx*rx+ry*ry);
       
       // Accept one-sided difference is much different than centered difference
@@ -181,22 +182,21 @@ void Redist::setInterfaceValues()
 void Redist::setInterfaceValuesDO()
 { 
   double meanabsbndval = 0.;
-  for(idx_t ii=0; ii<N; ++ii) {
+  for(idx_t ii=0; ii<N; ++ii)
     if(diffSign(ii)) {
       bnd.push_back(ii);
       meanabsbndval += std::abs(u0[ii]);
     }
-  }
+  
   meanabsbndval /= static_cast<double>(bnd.size());
   // rescale u0 based on meanabsbndval
-  u0 *= 0.5 * (mymax(dx,dy) / meanabsbndval); // scale u0 (rationale: mean distance to interface at a grid cell should be ~ 0.5 dx)
+  u0 *= 0.5 * std::max(dx,dy) / meanabsbndval; // scale u0 (rationale: mean distance to interface at a grid cell should be ~ 0.5 dx)
 
   // compute interface values and update
-  Helt bndval;
   for (idx_t ind : bnd) {
-    bndval = performDOSurf(ind);
+    Helt const bndval = performDOSurf(ind);
     applyResult(bndval);
-    state.put(true,bndval.second.i);
+    state.put(true, ind);
   }
 }
 
@@ -217,15 +217,14 @@ void Redist::directionalOptimization()
   setInterfaceValuesDO(); 
   thresholdAwayFromInterface();
 
-  for(idx_t ind : bnd) 
+  for (idx_t ind : bnd) 
     updateAndAddNeighborsToHeapDO(ind);
   Helt helt;
-  while(h.popFromHeap(helt))
-  {
+  while(h.popFromHeap(helt)) {
     if(!state.get(helt.second.i) && (std::abs(helt.first) < thres)) // don't update if outside threshold cutoff, or already fixed
     {
       applyResult(helt);
-      state.put(true,helt.second.i);
+      state.put(true, helt.second.i);
       updateAndAddNeighborsToHeapDO(helt.second.i);
     }
   }
@@ -247,8 +246,8 @@ void Redist::applyResult(Helt const &h)
 /// \return          Heap element containing the directional optimization result
 Helt Redist::performDO(idx_t const idx)
 { // make a guess for interface location and call performDO(const int ind, const double *cpguess)
-  Point grad({pdl(u0.getxp(idx),u0.getxm(idx),u0.lenx()) / (2.0f * dx),
-        pdl(u0.getyp(idx),u0.getym(idx),u0.leny()) / (2.0f * dy)}); 
+  Point grad({pdl(u0.getxp(idx),u0.getxm(idx),u0.lenx()) / (2. * dx),
+        pdl(u0.getyp(idx),u0.getym(idx),u0.leny()) / (2. * dy)}); 
   Point cpguess = lineSearch(idx, grad);
   return performDO(idx, cpguess);
 }
@@ -259,17 +258,21 @@ Helt Redist::performDO(idx_t const idx)
 Helt Redist::performDOSurf(idx_t const idx)
 { // make a guess for interface location and call performDO
   // make initial, gradient-based guess.
-  Point grad0({pdl(u0.getxp(idx),u0.getxm(idx),u0.lenx()) / (2.0f * dx), pdl(u0.getyp(idx),u0.getym(idx),u0.leny()) / (2.0f * dy)});
+  Point grad0({pdl(u0.getxp(idx),u0.getxm(idx),u0.lenx()) / (2. * dx), pdl(u0.getyp(idx),u0.getym(idx),u0.leny()) / (2. * dy)});
   Point grad = grad0;
   Point cpguess = lineSearch(idx,grad);
   Helt h = performDO(idx, cpguess);
 
-  std::array<double,16> const grad2all({1.0f,0.0f, 0.0f,1.0f, -1.0f,0.0f, 0.0f,-1.0f, 1.0f,1.0f, -1.0f,1.0f, -1.0f,-1.0f, 1.0f,-1.0f});
-  for(size_t ii = 0; ii<8; ++ii)
-  {
-    Point grad2 = {grad2all[2*ii], grad2all[2*ii+1]};
-    if(myDot(grad2[0],grad2[1],grad0[0],grad0[1]) >= 0.)
-    {
+  std::array<Point, 8> grad2all({{{1.,0.},
+        {0.,1.},
+        {-1.,0.},
+        {0.,-1.},
+        {1.,1.},
+        {-1.,1.},
+        {-1.,-1.},
+        {1.,-1}}});
+  for(Point &grad2 : grad2all) {
+    if(std::inner_product(grad2.begin(), grad2.end(), grad0.begin(), 0.) >= 0.) {
       Point cpguess2 = lineSearch(idx,grad2);
       Helt const h1 = performDO(idx, cpguess2);
       if( std::abs(h1.first) < std::abs(h.first) )
@@ -290,7 +293,7 @@ Helt Redist::performDO(idx_t const idx, Point const &cpguess)
   unsigned int const MAXLOOPS = 5;
   unsigned int const MAXSEARCHES = 5;
   // still not sure about this TOL!
-  double const TOL = mymax( (0.01 * mymin(dx,dy) / std::pow(static_cast<double>(mymax(m,n)),flag)), 5.0e-16);
+  double const TOL = std::max( (0.01 * std::min(dx,dy) / std::pow(static_cast<double>(std::max(m,n)),flag)), 5.0e-16);
   
   Point xl, xr, xc, xt;
   double dl, dc, dr, dt;
@@ -299,8 +302,8 @@ Helt Redist::performDO(idx_t const idx, Point const &cpguess)
   dc = dist(x0,xc,u.lenx(),u.leny());
   // set angle increment
   double delta;
-  if(dc > mymax(dx,dy))
-    delta = mymax(asin(mymax(dx,dy)/dc),PI/32.0f);
+  if(dc > std::max(dx,dy))
+    delta = std::max(asin(std::max(dx,dy)/dc),PI/32.);
   else // interface is nearby, look over a wide range
     delta = PI2;
 
@@ -312,10 +315,10 @@ Helt Redist::performDO(idx_t const idx, Point const &cpguess)
   for(unsigned int count0=0; count0<MAXLOOPS; ++count0)
   { // (1) center on minimum; (2) perform Newton step
     unsigned int count = 0;
-    while( (dc > mymin(dl,dr)) && (count++ < MAXSEARCHES))
+    while( (dc > std::min(dl,dr)) && (count++ < MAXSEARCHES))
     {
       if(delta < PI4-1e-4)
-        delta *= 2.0f;
+        delta *= 2.;
 
       if(dl < dr) {
         dc = dl; xc = xl;
@@ -327,10 +330,10 @@ Helt Redist::performDO(idx_t const idx, Point const &cpguess)
       dr = search1D(idx,xr);
     }
     // perform Newton step only if dl/dr are successfully computed
-    if(mymax(dl,dr) < 0.9f*mymax(m,n)*mymax(dx,dy))
+    if(std::max(dl,dr) < 0.9f*std::max(m,n)*std::max(dx,dy))
     {
-      double ds = (dr-dl)/2.0f;
-      double dss = (dr-2.0f*dc+dl);
+      double ds = (dr-dl)/2.;
+      double dss = (dr-2.*dc+dl);
       if(std::abs(dss) < 1e-16)
         dss = 1e-16;
       Point dir = {pdl(xc[0],x0[0],u.lenx()), pdl(xc[1],x0[1],u.leny())};
@@ -346,7 +349,7 @@ Helt Redist::performDO(idx_t const idx, Point const &cpguess)
     }
     if(count0 < MAXLOOPS)
     {
-      delta /= 2.0f;
+      delta /= 2.;
       findNborDirections(x0,xc,xl,xr,delta);
       dl = search1D(idx,xl);
       dr = search1D(idx,xr);
@@ -363,9 +366,9 @@ Helt Redist::performDO(idx_t const idx, Point const &cpguess)
 }
 
 /// Perform a line search along the direction defined by grad for the inteface
-/// \param[in] idx  : Location of the element being worked on
-/// \param[in] grad : Direction to search in
-/// \return           Guess at closest point location along this line
+/// \param[in] idx      : Location of the element being worked on
+/// \param[in,out] grad : Direction to search in; normalized in-place
+/// \return               Guess at closest point location along this line
 Point Redist::lineSearch(idx_t const idx, Point &grad)
 { // takes the given index at estimate of gradient direction (unnormalized)
   // and performs a line search along this direction for the interface.
@@ -373,7 +376,7 @@ Point Redist::lineSearch(idx_t const idx, Point &grad)
 
   normalize(grad);
   // get the correct direction to search in; 
-  double const val = SQRT2*mymax(dx,dy);
+  double const val = SQRT2*std::max(dx,dy);
   if(u[idx] < 0.) { // then we go uphill, keep gradient sign
     grad[0] *= val;
     grad[1] *= val;
@@ -424,100 +427,50 @@ bool Redist::bracket(idx_t const idx, Point const &cpguess, BracketPair &xm, Bra
   
   Point const x0({u.getX(idx), u.getY(idx)});
   double const uv0 = u0[idx];
-  if(mysign(uv0) == 0) // already on interface
-  {
-    xm.first = x0;
-    xm.second = uv0;
+  if(mysign(uv0) == 0) { // already on interface
+    xm = std::make_pair(x0, uv0);
     xp = xm;
-    return(true);
+    return true;
   }
 
   Point dir({pdl(cpguess[0],x0[0],u.lenx()), pdl(cpguess[1],x0[1],u.leny())});
   normalize(dir);
 
-  double ug = u0.interpolate(cpguess[0],cpguess[1]);
+  double const ug = u0.interpolate(cpguess[0],cpguess[1]);
   if(mysign(uv0 * ug) == 0) { // sign(ug) == 0; 
-    xm.first = cpguess; 
-    xm.second = ug;
+    xm = std::make_pair(cpguess, ug);
     xp = xm;
-    return(true);
+    return true;
   }
+  double const dr = std::max(dx,dy);
   if(mysign(uv0 * ug) == 1) { // same side of interface
-    double ug2 = u0.interpolate(cpguess[0]+dir[0]*mymax(dx,dy),cpguess[1]+dir[1]*mymax(dx,dy));
+    double const ug2 = u0.interpolate(cpguess[0]+dir[0]*dr,cpguess[1]+dir[1]*dr);
     if(mysign(uv0 * ug2) == 1) // still on same side of interface
-      return(false);
+      return false;
     else {
-      if(mysign(ug) == 0) {
-        if(mysign(ug2) == 1) {
-          xp.first[0] = cpguess[0]+dir[0]*mymax(dx,dy); 
-          xp.first[1] = cpguess[1]+dir[1]*mymax(dx,dy); 
-          xp.second = ug2;
-          xm.first = cpguess;
-          xm.second = ug;
-        } else {
-          xp.first = cpguess;
-          xp.second = ug;
-          xm.first[0] = cpguess[0]+dir[0]*mymax(dx,dy); 
-          xm.first[1] = cpguess[1]+dir[1]*mymax(dx,dy); 
-          xm.second = ug2;
-        }
-      }
-      else if(mysign(ug) == 1) {
-        xp.first = cpguess;
-        xp.second = ug;
-        xm.first[0] = cpguess[0]+dir[0]*mymax(dx,dy); 
-        xm.first[1] = cpguess[1]+dir[1]*mymax(dx,dy); 
-        xm.second = ug2;
-      } else { // mysign(ug) == -1
-        xp.first[0] = cpguess[0]+dir[0]*mymax(dx,dy); 
-        xp.first[1] = cpguess[1]+dir[1]*mymax(dx,dy); 
-        xp.second = ug2;
-        xm.first = cpguess;
-        xm.second = ug;
-      }
-      return(true);
+      xp = std::make_pair(cpguess, ug);
+      xm = std::make_pair(Point({cpguess[0]+dir[0]*dr, cpguess[1]+dir[1]*dr}), ug2);
+      if ( (mysign(ug)==-1) || ((mysign(ug)==0) && (mysign(ug2)==-1)) )
+        std::swap(xp,xm);
+      return true;
     }
   } else { // x0 and cpguess are on opposite sides of interface, work backwards
-    double xx = cpguess[0]-dir[0]*mymax(dx,dy);
-    double yy = cpguess[1]-dir[1]*mymax(dx,dy);
-    double ug2 = u0.interpolate(xx,yy);
+    Point xy({cpguess[0]-dir[0]*dr, cpguess[1]-dir[1]*dr});
+    double ug2 = u0.interpolate(xy[0],xy[1]);
     unsigned int tries = 0;
     while((mysign(ug*ug2) == 1) && (tries++ < 10)) {
-      xx -= dir[0]*mymax(dx,dy);
-      yy -= dir[1]*mymax(dx,dy);
-      ug2 = u0.interpolate(xx,yy);
+      xy[0] -= dir[0]*dr;
+      xy[1] -= dir[1]*dr;
+      ug2 = u0.interpolate(xy[0],xy[1]);
     }
     if(tries == 10)
-      return(false);
+      return false;
 
-    if(mysign(ug) == 1) {
-      xp.first = cpguess;
-      xp.second = ug;
-      xm.first[0] = xx;
-      xm.first[1] = yy;
-      xm.second = ug2;
-    } else if(mysign(ug) == -1) {
-      xp.first[0] = xx;
-      xp.first[1] = yy;
-      xp.second = ug2;
-      xm.first = cpguess;
-      xm.second = ug; 
-    } else { // mysign(ug) == 0
-      if(mysign(ug2) == 1) {
-        xp.first[0] = xx;
-        xp.first[1] = yy;
-        xp.second = ug2;
-        xm.first = cpguess;
-        xm.second = ug;
-      } else {
-        xp.first = cpguess;
-        xp.second = ug;
-        xm.first[0] = xx;
-        xm.first[1] = yy;
-        xm.second = ug2;
-      }
-    }
-    return(true);
+    xp = std::make_pair(cpguess, ug);
+    xm = std::make_pair(xy, ug2);
+    if ( (mysign(ug)==-1) || ((mysign(ug)==0) && (mysign(ug2)==1)) )
+      std::swap(xp,xm);
+    return true;
   }
 }
 
@@ -544,7 +497,7 @@ void Redist::bisect(idx_t const idx, Point &guess)
     xp = guess;
     up = u0.interpolate(xp[0],xp[1]);
     if(up <= -1.0e-15)
-      printf(" up = %e, um = %e\n",up,um);
+      std::cout << " up = " << up << ", um = " << um << std::endl;
   }
   
   if(up==um) {
@@ -553,12 +506,12 @@ void Redist::bisect(idx_t const idx, Point &guess)
   }
   if(std::isnan(up/(up-um)))
   {
-    printf(" up = %.3e, um = %.3e. Setting um = -1.0f.\n",up,um);
-    um = -1.0f;
+    std::cout << " up = " << up << ", um = " << um << ". Setting um = -1" << std::endl;
+    um = -1.;
   }
   Point xt = ccomb(xm,xp,up/(up-um),u0.lenx(),u0.leny());
-  assert(up>=0.0f); 
-  assert(um<=0.0f);
+  assert(up>=0.); 
+  assert(um<=0.);
   guess = xt;
   return;
 }
@@ -574,15 +527,14 @@ double Redist::bisect(Point &result, BracketPair const &xm, BracketPair const &x
   // Tries to find the zero between [idx] and (guess) by single linear approx.
   double up = xp.second; //u0.interpolate(xp[0],xp[1]);
   double um = xm.second; //u0.interpolate(xm[0],xm[1]);
-  assert(up>=0.0f); 
-  assert(um<=0.0f);
+  assert(up>=0.); 
+  assert(um<=0.);
   if(up==um) {
     result = xp.first;
     return(up);
   }
   result = ccomb(xm.first, xp.first, up/(up-um), u0.lenx(), u0.leny());
-  double ut = u0.interpolate(result[0],result[1]); 
-  return(ut);
+  return u0.interpolate(result[0],result[1]); 
 }
 
 /// Find directions at angles +/- delta from vector xc-x0 with same length
@@ -614,15 +566,14 @@ void Redist::findNborDirections(Point const &x0,
 double Redist::search1D(idx_t const idx, Point &x)
 {
   // bracket the interface in the search directions
-  Point x0({u.getX(idx), u.getY(idx)});
   BracketPair xm, xp; // xm and xp also return values from u0
   // once bracketed successfully, bisect
   if(bracket(idx,x,xm,xp)) {
-    double val1 = bisect(x,xm,xp);
+    double const val1 = bisect(x,xm,xp);
+    Point const x0({u.getX(idx), u.getY(idx)});
     return dist(x0,x,u.lenx(),u.leny()) + val1 * mysign(u0[idx]);
   }
-  else
-    return mymax(m,n)*mymax(dx,dy);
+  return std::max(u.lenx(), u.leny());
 }
 
 /// Write u out to a pointer (e.g., for MATLAB)
@@ -630,8 +581,7 @@ double Redist::search1D(idx_t const idx, Point &x)
 /// \todo Fix this function / memcpy
 void Redist::dump_u(double *v)
 { // assumes sufficient memory is allocated into v
-  assert(0);
-  //memcpy(v, u.returnData().data(), N * sizeof(double));
+  std::memcpy(v, u.returnData().data(), N * sizeof(double));
 }
 
 /// Write cpx, cpy out to pointers (e.g., for MATLAB)
@@ -640,17 +590,16 @@ void Redist::dump_u(double *v)
 /// \todo Fix this function / memcpy
 void Redist::dump_cp(double *cpxArr, double *cpyArr)
 { // assume sufficient memory is allocated into cpxArr, cpyArr
-  assert(0); ///< \todo FIXME: do memcpy, remove assertion
-  //memcpy(cpxArr, cpx.returnData().data(), N * sizeof(double));
-  //memcpy(cpyArr, cpy.returnData().data(), N * sizeof(double));
+  std::memcpy(cpxArr, cpx.returnData().data(), N * sizeof(double));
+  std::memcpy(cpyArr, cpy.returnData().data(), N * sizeof(double));
 }
 
 /// Perform second order iterations for non-directional optimization
 void Redist::secondOrderIterations()
 {
-  double const me = 1.0f/ 10000.0f * mymax(dx,dy);
+  double const me = 1./ 10000. * std::max(dx,dy);
   double const thres2 = thres - dx;
-  double const dt = 1.0f / 5.0f * mymax(dx,dy);
+  double const dt = 1. / 5. * std::max(dx,dy);
   // Step 1: Figure out which indices to do the iterations on
   std::vector<int> idxc;
   for(idx_t ii=0; ii<N; ++ii)
@@ -707,11 +656,11 @@ void Redist::secondOrderIterations()
         t1[0] = dy; t1[1] = dy; t1[2] = dy; t1[3] = dy; 
         if((mysigntol(t0[0],me)*mysigntol(t0[1],me))==-1) {
           t1[0] = dy * t0[1] / (t0[1]-t0[0]);
-          t0[0] = 0.0f;
+          t0[0] = 0.;
         }
         if((mysigntol(t0[3],me)*mysigntol(t0[4],me))==-1) {
           t1[3] = -dy * t0[3] / (t0[4]-t0[3]);
-          t0[4] = 0.0f;
+          t0[4] = 0.;
         }
         
         t2[0] = (t0[1]-t0[0]) / t1[0];
@@ -763,3 +712,11 @@ bool Redist::diffSign(idx_t const idx)
   int const sui = mysign(u0[idx]);
   return ((sui != mysign(u0.getxp(idx))) || (sui != mysign(u0.getyp(idx))) || (sui != mysign(u0.getxm(idx))) || (sui != mysign(u0.getym(idx))));
 }
+
+/// Return a const reference to the signed distance function
+/// \return Const reference to the signed distance function
+Array2D<double> const& Redist::dump_u()
+{
+  return u;
+}
+

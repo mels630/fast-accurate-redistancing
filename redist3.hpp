@@ -4,11 +4,10 @@
 #include "array3d.hpp"
 #include "idarray3d.hpp"
 #include "heap.hpp"
+#include "defs.h"
 
 #include <utility>
 #include <array>
-
-using Point3 = std::array<double, 3>;
 
 /// Auxilary data-carrying POD struct for heap operations
 struct Aux3
@@ -24,6 +23,7 @@ public:
 };
 
 using Helt3 = std::pair<double, Aux3>;
+using PrPtD = std::pair<Point3, double>;
 
 class Redist3
 { 
@@ -47,7 +47,8 @@ private:
   Array3D<double> cpx;    ///< x-value of closest point on interface
   Array3D<double> cpy;    ///< y-value of closest point on interface
   Array3D<double> cpz;    ///< z-value of closest point on interface
-
+  bool bWarn;             ///< Flag for warning user about non-existence of secondOrderIterations
+  
   void fastMarchingRedist();
   void directionalOptimization();
   void updateAndAddNeighborsToHeap(idx_t const idx);
@@ -57,23 +58,25 @@ private:
   void setInterfaceValuesDO();
   void thresholdAwayFromInterface();
   void applyResult(Helt3 const &h);
-  struct helt performDO(idx_t const idx);
-  struct helt performDO(idx_t const idx, Point3 const &cpguess)
-  void lineSearch(idx_t const idx, double (&grad)[3], double (&cpguess)[3]);
-  bool findOppSign(idx_t const idx, double (&guess)[3]);
-  void bisect(idx_t const idx, double (&guess)[3]);
-  double bisect(double (&result)[3], double (&xm)[4], double (&xp)[4]);
-  explicit Redist3(); // no empty constructor
-  bool bracket(idx_t const idx, double (&cpguess)[3], double (&xm)[4], double (&xp)[4]);
-  double findNborDirections(const double (&x0)[3], double (&xx)[5][3], const double delta, double (&rvec)[3], double (&v1)[3], double (&v2)[3]);
-  double search1D(idx_t const idx, double (&x)[3]);
+  Helt3 performDO(idx_t const idx);
+  Helt3 performDOSurf(idx_t const idx);
+  Helt3 performDO(idx_t const idx, Point3 const &cpguess);
+  Point3 lineSearch(idx_t const idx, Point3 &grad);
+  bool findOppSign(idx_t const idx, Point3 &guess);
+  void bisect(idx_t const idx, Point3 &guess);
+  double bisect(Point3 &result, std::pair<Point3, double> const &xm, std::pair<Point3, double> const &xp);
+  Redist3() = delete; // no empty constructor
+  bool bracket(idx_t const idx, Point3 const &cpguess, std::pair<Point3, double> &xm, std::pair<Point3, double> &xp);
+  double findNborDirections(Point3 const &x0, std::array<PrPtD, 5> &xx, double const delta, Point3 &rvec, Point3 &v1, Point3 &v2);
+  double search1D(idx_t const idx, Point3 &x);
   void secondOrderIterations();
-  bool diffSign(int idx);
+  bool diffSign(idx_t const idx);
   
 public:
-  explicit Redist3(const Array3D<double> &_u, idx_t const _width, int const _flag);
+  Redist3(Array3D<double> const &_u, idx_t const _width, int const _flag);
   void redistance();
   void dump_u(double *v);
+  Array3D<double> const& dump_u();
   void dump_cp(double *cpx_d, double *cpy_d, double *cpz_d);
 };
 

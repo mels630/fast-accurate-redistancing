@@ -2,8 +2,11 @@
 #define _DEFS_H_
 
 #include <vector> // for std::size_t
+#include <array>
 
 using idx_t = std::size_t;
+using Point = std::array<double,2>;
+using Point3 = std::array<double,3>;
 
 /*********** Define Pi *********/
 #ifndef PI
@@ -19,9 +22,9 @@ using idx_t = std::size_t;
 /********** Define maximum and minimum and sign ***********/
 #ifndef MAXMINSIGN
   #define MAXMINSIGN
-  #define mymax(x,y) ( (x)>(y) ? (x) : (y) )
-  #define mymin(x,y) ( (x)>(y) ? (y) : (x) )
-  #define mymax3(a,b,c) (mymax(mymax((a),(b)),(c)))
+  //#define mymax(x,y) ( (x)>(y) ? (x) : (y) )
+  //#define mymin(x,y) ( (x)>(y) ? (y) : (x) )
+  #define mymax3(a,b,c) (std::max(std::max((a),(b)),(c)))
   #define mymin3(a,b,c) (mymin(mymin((a),(b)),(c)))
   #define mysign(x)  ( (x)<(0) ? (-1) : ( (x)==(0) ? (0):(1) ))
   #define mysigntol(x,tol) ( (x)<(-(tol)) ? (-1) : ( (x)>(tol) ? (1):(0) ))
@@ -38,8 +41,8 @@ using idx_t = std::size_t;
   #define dinrange2l(x,len) ( (x)-(len)*floor((x)/(len)) )
   #define pd(x,y) ( (fabs((x)-(y)) < 0.5) ? ((x)-(y)) : ( ((x)-(y) >= 0.5) ? ((x)-1.0-(y)) : ((x)+1.0-(y))) )
   #define pdl(x,y,len) ( (fabs((x)-(y)) < len/2.0f) ? ((x)-(y)) : ( ((x)-(y) >= len/2.0f) ? ((x)-len-(y)) : ((x)+len-(y))) )
-  #define myDist(x0,y0,x1,y1) ( sqrt(pd((x0),(x1))*pd((x0),(x1)) + pd((y0),(y1))*pd((y0),(y1))) )
-  #define myDot(x0,y0,x1,y1) ( (x0)*(x1) + (y0)*(y1) )
+  //#define myDist(x0,y0,x1,y1) ( sqrt(pd((x0),(x1))*pd((x0),(x1)) + pd((y0),(y1))*pd((y0),(y1))) )
+  //#define myDot(x0,y0,x1,y1) ( (x0)*(x1) + (y0)*(y1) )
 #endif
 /*************************************************/
 

@@ -130,7 +130,7 @@ double dist(Point3 const &x1, Point3 const &x2)
 /// \param[in] ylen : Length of space in y
 /// \param[in] zlen : Length of space in z
 /// \return         L2 distance between x1 and x2
-double dist(Point const &x1, Point const &x2, double const xlen, double const ylen, double const zlen)
+double dist(Point3 const &x1, Point3 const &x2, double const xlen, double const ylen, double const zlen)
 {
   Point3 const diff({pdl(x2[0],x1[0],xlen), pdl(x2[1],x1[1],ylen), pdl(x2[2],x1[2],zlen)});
   return std::sqrt(diff[0]*diff[0]+diff[1]*diff[1]+diff[2]*diff[2]);
@@ -142,7 +142,7 @@ double dist(Point const &x1, Point const &x2, double const xlen, double const yl
 /// \param[out] out2 : Output vector ON to in and out1
 void orthoVecs(Point3 const &in, Point3 &out1, Point3 &out2)
 {
-  generateRandomVec(out1,in);
+  out1 = generateRandomVec(in);
   out2 = mycross(in,out1); /* out2 should be O.N. to in */
   normalize(out2);
   out1 = mycross(in,out2); /* out1 should be O.N to in, out2 */

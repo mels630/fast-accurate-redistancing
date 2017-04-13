@@ -7,9 +7,8 @@
 #include "array2d.hpp"
 #include "array3d.hpp"
 #include "toolbox.hpp"
+#include "toolbox3d.hpp"
 #include <cassert>
-using std::cout;
-using std::cin;
 
 int main(int argc, char **argv)
 {
@@ -23,14 +22,14 @@ int main(int argc, char **argv)
   // Assume square initially ... (?)
   int d, n, width, flag;
   if(argc == 1) {
-    cout << "Enter dimension: ";
-    cin >> d;
-    cout << "Enter n: ";
-    cin >> n;
-    cout << "Enter width: ";
-    cin >> width;
-    cout << "Enter flag: ";
-    cin >> flag;
+    std::cout << "Enter dimension: ";
+    std::cin >> d;
+    std::cout << "Enter n: ";
+    std::cin >> n;
+    std::cout << "Enter width: ";
+    std::cin >> width;
+    std::cout << "Enter flag: ";
+    std::cin >> flag;
   } else {
     assert (argc > 4);
     d = std::atoi(argv[1]);
@@ -54,19 +53,19 @@ int main(int argc, char **argv)
     // Perform the redistancing
     Redist r(u0,width,flag);
     r.redistance();
-    cout << endl << "Calculated L2-error is " << l2err(r.dump_u(), u0) << endl;  
+    std::cout << std::endl << "Calculated L2-error is " << l2err(r.dump_u(), u0) << std::endl;  
   }
   else if(d == 3)
   {
-    Array3D<double> u = makeSphere(n,.25,.5,.5,.5);
+    Array3D<double> u0 = makeSphere(n,.25,.5,.5,.5);
 
     // Perform the redistancing
-    Redist3 r(u,width,flag);
+    Redist3 r(u0,width,flag);
     r.redistance();
-    cout << endl << "Calculated L2-error is " << l2err(r.u, r.u0) << endl;  
+    std::cout << std::endl << "Calculated L2-error is " << l2err(r.dump_u(), u0) << std::endl;  
   }
   else
-    cout << "d must be 2 or 3." << endl;
+    std::cout << "d must be 2 or 3." << std::endl;
 
   return(0);
 }

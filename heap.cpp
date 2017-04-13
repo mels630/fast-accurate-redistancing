@@ -36,7 +36,7 @@ void Heap<S,T>::flip(idx_t ix1, idx_t ix2)
 template<class S, class T>
 void Heap<S,T>::addToHeap(T const &t, S const &s)
 {
-  addToHeap(std::make_pair<S,T>(s,t));
+  addToHeap(std::make_pair(s,t));
 }
 
 /// Add a new element to the help
@@ -82,15 +82,15 @@ bool Heap<S,T>::popFromHeap(std::pair<S,T> &st)
   idx_t pos = 0;
   while(true) {
     if(rch(pos) < numelt) {
-      if(h[lch(pos)].d <= h[rch(pos)].d) {
-	if(h[lch(pos)].d < h[pos].d) {
+      if(h[lch(pos)].first <= h[rch(pos)].first) {
+	if(h[lch(pos)].first < h[pos].first) {
 	  flip(lch(pos),pos);
 	  pos = lch(pos);
 	}
 	else
 	  return true;
       } else {
-	if(h[rch(pos)].d < h[pos].d) {
+	if(h[rch(pos)].first < h[pos].first) {
 	  flip(rch(pos),pos);
 	  pos = rch(pos);
 	} else
@@ -98,7 +98,7 @@ bool Heap<S,T>::popFromHeap(std::pair<S,T> &st)
       }
     } else {
       if(lch(pos) < numelt) {
-	if(h[lch(pos)].d < h[pos].d) {
+	if(h[lch(pos)].first < h[pos].first) {
 	  flip(lch(pos),pos);
 	  pos = lch(pos);
 	}
@@ -111,10 +111,17 @@ bool Heap<S,T>::popFromHeap(std::pair<S,T> &st)
   }
 }
 
+/* ** can only have this if operator<< is overload for all classes S and T
 /// Print the heap
 template<class S, class T>
 void Heap<S,T>::showHeap() const
 {
-  for(int ii=0; ii<numelt; ++ii)
+  for(idx_t ii=0; ii<numelt; ++ii)
     std::cout << "(" << h[ii].first << "," << h[ii].second << std::endl;
 }
+*/
+
+#include "redist.hpp"
+#include "redist3.hpp"
+template class Heap<double, Aux>;
+template class Heap<double, Aux3>;
