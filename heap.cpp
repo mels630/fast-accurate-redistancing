@@ -17,7 +17,7 @@ Heap<S,T>::Heap(idx_t const initcapacity, idx_t const _blocksize) :
   h(initcapacity),
   numelt(0),
   capacity(initcapacity),
-  blocksize(_blocksize)
+  blocksize(std::max(_blocksize, idx_t(10)))
 { }
 
 /// Swap two elements
