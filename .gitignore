@@ -5,3 +5,8 @@ redistMain
 html
 latex
 *.exe
+.ipynb_checkpoints
+*.ipynb
+build
+*.so
+pyRedist.cpp
