@@ -8,7 +8,47 @@
 #include "array3d.hpp"
 #include "toolbox.hpp"
 #include "toolbox3d.hpp"
+#include "redistMain.hpp"
 #include <cassert>
+
+void RedistDriver::Run(int const d, int const n, int const width, int const flag)
+{
+  std::vector<double> vd = Run(d, n, width, flag, false);
+  assert(vd.empty());
+}
+
+std::vector<double> RedistDriver::Run(int const d, int const n, int const width, int const flag, bool const bReturnArray)
+{
+  std::vector<double> vdu;
+  if(d == 2)
+  {
+    Array2D<double> u0 = makeCircle(n,.25,.5,.5);
+    //Array2D<double> v = makeCircle(n,.35,.5,.5);
+    //Array2D<double> u0 = makeBox(n);
+
+    // Perform the redistancing
+    Redist r(u0,width,flag);
+    r.redistance();
+    std::cout << std::endl << "Calculated L2-error is " << l2err(r.dump_u(), u0) << std::endl;
+    if (bReturnArray)
+      vdu = r.dump_u().returnData();
+  }
+  else if(d == 3)
+  {
+    Array3D<double> u0 = makeSphere(n,.25,.5,.5,.5);
+
+    // Perform the redistancing
+    Redist3 r(u0,width,flag);
+    r.redistance();
+    std::cout << std::endl << "Calculated L2-error is " << l2err(r.dump_u(), u0) << std::endl;
+
+    if (bReturnArray)
+      vdu = r.dump_u().returnData();
+  }
+  else
+    std::cout << "d must be 2 or 3." << std::endl;
+  return vdu;
+}
 
 int main(int argc, char **argv)
 {
@@ -43,30 +83,9 @@ int main(int argc, char **argv)
   std::cout << "        n: " << n << std::endl;
   std::cout << "    width: " << width << std::endl;
   std::cout << "     flag: " << flag << std::endl;
-      
-  if(d == 2)
-  {
-    Array2D<double> u0 = makeCircle(n,.25,.5,.5);
-    //Array2D<double> v = makeCircle(n,.35,.5,.5);
-    //Array2D<double> u0 = makeBox(n);
 
-    // Perform the redistancing
-    Redist r(u0,width,flag);
-    r.redistance();
-    std::cout << std::endl << "Calculated L2-error is " << l2err(r.dump_u(), u0) << std::endl;  
-  }
-  else if(d == 3)
-  {
-    Array3D<double> u0 = makeSphere(n,.25,.5,.5,.5);
-
-    // Perform the redistancing
-    Redist3 r(u0,width,flag);
-    r.redistance();
-    std::cout << std::endl << "Calculated L2-error is " << l2err(r.dump_u(), u0) << std::endl;  
-  }
-  else
-    std::cout << "d must be 2 or 3." << std::endl;
-
+  RedistDriver rd;
+  rd.Run(d,n,width,flag);
   return(0);
 }
 
