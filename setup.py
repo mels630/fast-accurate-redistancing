@@ -9,7 +9,7 @@ ext = Extension("pyRedist",
                 include_dirs=["/home/melsey/Git/fast-accurate-redistancing/"],
                 library_dirs=["/home/melsey/Git/fast-accurate-redistancing/"],
                 libraries=["redistMain"],
-                extra_compile_args=["-std=c++11", "-Wl,-rpath,"+os.getcwd()])
+                extra_compile_args=["-std=c++11"])
 
 setup(
     ext_modules = cythonize([ext])

@@ -35,7 +35,7 @@ std::vector<double> RedistDriver::Run(int const d, int const n, int const width,
   }
   else if(d == 3)
   {
-    Array3D<double> u0 = makeSphere(n,.25,.5,.5,.5);
+    Array3D<double> u0 = makeSphere(n,.25,.5,.5,.5); 
 
     // Perform the redistancing
     Redist3 r(u0,width,flag);

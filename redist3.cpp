@@ -11,10 +11,11 @@ namespace {
        we return with a1<=a2<=a3 */
     if(a2 < a1)
       std::swap(a1,a2);
-    if(a3 < a1)
-      std::swap(a1,a2);
-    else if(a3 < a2)
+    if(a3 < a2) {
       std::swap(a2,a3);
+      if(a2 < a1)
+        std::swap(a1,a2);
+    }
   }
 }
 
@@ -117,7 +118,7 @@ void Redist3::updateAndAddNeighborsToHeap(idx_t const idx)
 /// \param[in] idx : Location to work from
 void Redist3::updateAndAddNeighborsToHeapDO(idx_t const idx)
 {
-  std::array<idx_t, 6> const idx2arr = {u.xp(idx), u.xm(idx), u.yp(idx), u.ym(idx), u.xp(idx), u.xm(idx)};
+  std::array<idx_t, 6> const idx2arr = {u.xp(idx), u.xm(idx), u.yp(idx), u.ym(idx), u.zp(idx), u.zm(idx)};
   for (idx_t const ind : idx2arr) {
     if(!state.get(ind)) { // if true, value is already fixed
       Helt3 const htemp = performDO(ind, Point3({cpx[idx],cpy[idx],cpz[idx]}));
@@ -152,7 +153,7 @@ double Redist3::estimateUpdate(idx_t const idx)
 
 /// Set values of output signed distance function at the interface
 void Redist3::setInterfaceValues()
-{ 
+{
   Array3D<int> sgn(u.getm(),u.getn(),u.getk());
   std::vector<int> &vSgn = sgn.returnData();
   std::vector<double> const &vu = u.returnData();
@@ -168,15 +169,15 @@ void Redist3::setInterfaceValues()
   
   std::transform(bnd.begin(), bnd.end(), dr.begin(), [&](idx_t const ii)->double {
       // compute norm(grad u) with centered differences
-      double rx = (u.getxp(bnd[ii])-u.getxm(bnd[ii]))/dx/2.;
-      double ry = (u.getyp(bnd[ii])-u.getym(bnd[ii]))/dy/2.;
-      double rz = (u.getzp(bnd[ii])-u.getzm(bnd[ii]))/dz/2.;
+      double rx = (u.getxp(ii)-u.getxm(ii))/dx/2.;
+      double ry = (u.getyp(ii)-u.getym(ii))/dy/2.;
+      double rz = (u.getzp(ii)-u.getzm(ii))/dz/2.;
       double dr = sqrt(rx*rx+ry*ry+rz*rz);
 
       // compute norm(grad u) with one-sided differences
-      rx = std::max(fabs(u.getxp(bnd[ii])-u.get(bnd[ii])),fabs(u.get(bnd[ii])-u.getxm(bnd[ii])))/dx;
-      ry = std::max(fabs(u.getyp(bnd[ii])-u.get(bnd[ii])),fabs(u.get(bnd[ii])-u.getym(bnd[ii])))/dy;
-      rz = std::max(fabs(u.getzp(bnd[ii])-u.get(bnd[ii])),fabs(u.get(bnd[ii])-u.getzm(bnd[ii])))/dz;
+      rx = std::max(fabs(u.getxp(ii)-u.get(ii)),fabs(u.get(ii)-u.getxm(ii)))/dx;
+      ry = std::max(fabs(u.getyp(ii)-u.get(ii)),fabs(u.get(ii)-u.getym(ii)))/dy;
+      rz = std::max(fabs(u.getzp(ii)-u.get(ii)),fabs(u.get(ii)-u.getzm(ii)))/dz;
       double const dr2 = sqrt(rx*rx+ry*ry+rz*rz);
 
       // Accept one-sided difference is much different than centered difference
