@@ -19,12 +19,16 @@ void RedistDriver::Run(int const d, int const n, int const width, int const flag
 
 std::vector<double> RedistDriver::Run(int const d, int const n, int const width, int const flag, bool const bReturnArray)
 {
+  std::cout << "Settings:" << std::endl;
+  std::cout << "        d: " << d << std::endl;
+  std::cout << "        n: " << n << std::endl;
+  std::cout << "    width: " << width << std::endl;
+  std::cout << "     flag: " << flag << std::endl;
+
   std::vector<double> vdu;
   if(d == 2)
   {
     Array2D<double> u0 = makeCircle(n,.25,.5,.5);
-    //Array2D<double> v = makeCircle(n,.35,.5,.5);
-    //Array2D<double> u0 = makeBox(n);
 
     // Perform the redistancing
     Redist r(u0,width,flag);
@@ -78,12 +82,6 @@ int main(int argc, char **argv)
     flag = std::atoi(argv[4]);
   }
   
-  std::cout << "Settings:" << std::endl;
-  std::cout << "        d: " << d << std::endl;
-  std::cout << "        n: " << n << std::endl;
-  std::cout << "    width: " << width << std::endl;
-  std::cout << "     flag: " << flag << std::endl;
-
   RedistDriver rd;
   rd.Run(d,n,width,flag);
   return(0);

@@ -173,7 +173,7 @@ idx_t Array2D<T>::sub2ind(idx_t const ii, idx_t const jj) const
 }
 
 /// Return flat index of adjacent location in positive x direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Flat index of adjacent location in positive x direction
 template <typename T>
 idx_t Array2D<T>::xp(idx_t const idx) const
@@ -182,7 +182,7 @@ idx_t Array2D<T>::xp(idx_t const idx) const
 }
 
 /// Return flat index of adjacent location in negative x direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Flat index of adjacent location in negative x direction
 template <typename T>
 idx_t Array2D<T>::xm(idx_t const idx) const
@@ -191,7 +191,7 @@ idx_t Array2D<T>::xm(idx_t const idx) const
 }
 
 /// Return flat index of adjacent location in positive y direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Flat index of adjacent location in positive y direction
 template <typename T>
 idx_t Array2D<T>::yp(idx_t const idx) const
@@ -200,7 +200,7 @@ idx_t Array2D<T>::yp(idx_t const idx) const
 }
 
 /// Return flat index of adjacent location in negative y direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Flat index of adjacent location in negative y direction
 template <typename T>
 idx_t Array2D<T>::ym(idx_t const idx) const
@@ -209,7 +209,7 @@ idx_t Array2D<T>::ym(idx_t const idx) const
 }
 
 /// Return array value at adjacent location in positive x direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Array value at adjacent location in positive x direction
 template <typename T>
 T Array2D<T>::getxp(idx_t const idx) const
@@ -218,7 +218,7 @@ T Array2D<T>::getxp(idx_t const idx) const
 }
 
 /// Return array value at adjacent location in negative x direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Array value at adjacent location in negative x direction
 template <typename T>
 T Array2D<T>::getxm(idx_t const idx) const
@@ -227,7 +227,7 @@ T Array2D<T>::getxm(idx_t const idx) const
 }
 
 /// Return array value at adjacent location in positive y direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Array value at adjacent location in positive y direction
 template <typename T>
 T Array2D<T>::getyp(idx_t const idx) const
@@ -236,7 +236,7 @@ T Array2D<T>::getyp(idx_t const idx) const
 }
 
 /// Return array value at adjacent location in negative y direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Array value at adjacent location in negative y direction
 template <typename T>
 T Array2D<T>::getym(idx_t const idx) const

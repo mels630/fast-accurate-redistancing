@@ -476,7 +476,7 @@ idx_t Array3D<T>::getZidx(const idx_t idx) const
 }
 
 /// Return flat index of adjacent location in positive x direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Flat index of adjacent location in positive x direction
 template <typename T>
 idx_t Array3D<T>::xp(const idx_t idx) const
@@ -485,7 +485,7 @@ idx_t Array3D<T>::xp(const idx_t idx) const
 }
 
 /// Return flat index of adjacent location in negative x direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Flat index of adjacent location in negative x direction
 template <typename T>
 idx_t Array3D<T>::xm(const idx_t idx) const
@@ -494,7 +494,7 @@ idx_t Array3D<T>::xm(const idx_t idx) const
 }
 
 /// Return flat index of adjacent location in positive y direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Flat index of adjacent location in positive y direction
 template <typename T>
 idx_t Array3D<T>::yp(const idx_t idx) const
@@ -503,7 +503,7 @@ idx_t Array3D<T>::yp(const idx_t idx) const
 }
 
 /// Return flat index of adjacent location in negative y direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Flat index of adjacent location in negative y direction
 template <typename T>
 idx_t Array3D<T>::ym(const idx_t idx) const
@@ -512,7 +512,7 @@ idx_t Array3D<T>::ym(const idx_t idx) const
 }
 
 /// Return flat index of adjacent location in positive z direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Flat index of adjacent location in positive z direction
 template <typename T>
 idx_t Array3D<T>::zp(const idx_t idx) const
@@ -521,7 +521,7 @@ idx_t Array3D<T>::zp(const idx_t idx) const
 }
 
 /// Return flat index of adjacent location in negative z direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Flat index of adjacent location in negative z direction
 template <typename T>
 idx_t Array3D<T>::zm(const idx_t idx) const
@@ -530,7 +530,7 @@ idx_t Array3D<T>::zm(const idx_t idx) const
 }
 
 /// Return array value at adjacent location in positive x direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Array value at adjacent location in positive x direction
 template <typename T>
 T Array3D<T>::getxp(const idx_t idx) const
@@ -539,7 +539,7 @@ T Array3D<T>::getxp(const idx_t idx) const
 }
 
 /// Return array value at adjacent location in negative x direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Array value at adjacent location in negative x direction
 template <typename T>
 T Array3D<T>::getxm(const idx_t idx) const
@@ -548,7 +548,7 @@ T Array3D<T>::getxm(const idx_t idx) const
 }
 
 /// Return array value at adjacent location in positive y direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Array value at adjacent location in positive y direction
 template <typename T>
 T Array3D<T>::getyp(const idx_t idx) const
@@ -557,7 +557,7 @@ T Array3D<T>::getyp(const idx_t idx) const
 }
 
 /// Return array value at adjacent location in negative y direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Array value at adjacent location in negative y direction
 template <typename T>
 T Array3D<T>::getym(const idx_t idx) const
@@ -566,7 +566,7 @@ T Array3D<T>::getym(const idx_t idx) const
 }
 
 /// Return array value at adjacent location in positive z direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Array value at adjacent location in positive z direction
 template <typename T>
 T Array3D<T>::getzp(const idx_t idx) const
@@ -575,7 +575,7 @@ T Array3D<T>::getzp(const idx_t idx) const
 }
 
 /// Return array value at adjacent location in negative z direction
-/// \params[in] idx : Current flat index
+/// \param[in] idx : Current flat index
 /// \return           Array value at adjacent location in negative z direction
 template <typename T>
 T Array3D<T>::getzm(const idx_t idx) const
