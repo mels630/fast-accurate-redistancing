@@ -68,8 +68,8 @@ void Heap<S,T>::addToHeap(std::pair<S,T> const &st)
 }
 
 /// Pop the top element from the heap and return it
-/// \param[out] : Top element from the heap if return is true
-/// \return     : True if pop succeeds
+/// \param[out] st : Top element from the heap if return is true
+/// \return          True if pop succeeds
 template<class S, class T>
 bool Heap<S,T>::popFromHeap(std::pair<S,T> &st)
 { // pop top element

@@ -20,7 +20,15 @@ public:
   Aux3& operator=(Aux3 const &a) = default; ///< Default assignment operator
   idx_t i;                                  ///< Index data
   Point3 aux;                               ///< Closest point location
+
+  /// Comparison operator
+  /// \param[in] other : Aux object to compare to
+  /// \return            True if *this is lexicographically less than other
   bool operator<(Aux3 const &other) const { return i < other.i; }
+
+  /// Comparison operator
+  /// \param[in] other : Aux object to compare to
+  /// \return            True if *this is lexicographically greater than other
   bool operator>(Aux3 const &other) const { return other < *this; }
 };
 

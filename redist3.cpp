@@ -62,7 +62,7 @@ Redist3::Redist3(const Array3D<double> &_u, const idx_t _width, const int _flag)
   bWarn(false)
 { }
 
-// Perform the redistancing
+/// Perform the redistancing
 void Redist3::redistance()
 {
   if((u.getn() != u.getm()) || (u.getn() != u.getk()))
@@ -641,12 +641,15 @@ double Redist3::search1D(idx_t const idx, Point3 &x)
 
 /// Write u out to a pointer (e.g., for MATLAB)
 /// \param[out] v : Double array to write to. Memory assumed to be pre-allocated
-/// \todo Fix this function / memcpy
 void Redist3::dump_u(double *v)
 { // assumes sufficient memory is allocated into v
   std::memcpy(v, u.returnData().data(), N * sizeof(double));
 }
 
+/// Write cpx, cpy, cpz out to pointers (e.g., for MATLAB)
+/// \param[out] cpx_d : Double array to write cpx to. Memory assumed to be pre-allocated
+/// \param[out] cpy_d : Double array to write cpy to. Memory assumed to be pre-allocated
+/// \param[out] cpz_d : Double array to write cpz to. Memory assumed to be pre-allocated
 void Redist3::dump_cp(double *cpx_d, double *cpy_d, double *cpz_d)
 { // assume sufficient memory is allocated into cpx, cpy, cpz
   std::memcpy(cpx_d, cpx.returnData().data(), N * sizeof(double));

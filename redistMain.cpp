@@ -13,12 +13,26 @@
 
 
 /// \todo Replace empty RedistDriver class with free functions, get working with Python
+/// \todo Resolve output differences between Python and straight c++
+
+/// Run a circle or sphere with error output
+/// \param[in] d     : Number of spatial dimensions
+/// \param[in] n     : Number of pixels in each spatial dimension
+/// \param[in] width : Number of pixels to redist out to
+/// \param[in] flag  : 1 - Fast Marching, 2 - DO with quadratic interpolation, 3 - DO with cubic interpolation (2D only)
 void RedistDriver::Run(int const d, int const n, int const width, int const flag)
 {
   std::vector<double> vd = Run(d, n, width, flag, false);
   assert(vd.empty());
 }
 
+/// Run a circle or sphere with error output
+/// \param[in] d            : Number of spatial dimensions
+/// \param[in] n            : Number of pixels in each spatial dimension
+/// \param[in] width        : Number of pixels to redist out to
+/// \param[in] flag         : 1 - Fast Marching, 2 - DO with quadratic interpolation, 3 - DO with cubic interpolation (2D only)
+/// \param[in] bReturnArray : Flag indicated whether to return output
+/// \return                   If bReturnArray is true, vector of redistanced output, else, empty vector
 std::vector<double> RedistDriver::Run(int const d, int const n, int const width, int const flag, bool const bReturnArray)
 {
   std::cout << "Settings:" << std::endl;

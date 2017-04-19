@@ -6,7 +6,7 @@
 class RedistDriver
 {
 public:
-  RedistDriver() = default;
+  RedistDriver() = default; ///< Default constructor
   void Run(int const d, int const n, int const width, int const flag);
   std::vector<double> Run(int const d, int const n, int const width, int const flag, bool const bReturnArray);
 };

@@ -578,7 +578,6 @@ double Redist::search1D(idx_t const idx, Point &x)
 
 /// Write u out to a pointer (e.g., for MATLAB)
 /// \param[out] v : Double array to write to. Memory assumed to be pre-allocated
-/// \todo Fix this function / memcpy
 void Redist::dump_u(double *v)
 { // assumes sufficient memory is allocated into v
   std::memcpy(v, u.returnData().data(), N * sizeof(double));
@@ -587,7 +586,6 @@ void Redist::dump_u(double *v)
 /// Write cpx, cpy out to pointers (e.g., for MATLAB)
 /// \param[out] cpxArr : Double array to write cpx to. Memory assumed to be pre-allocated
 /// \param[out] cpyArr : Double array to write cpy to. Memory assumed to be pre-allocated
-/// \todo Fix this function / memcpy
 void Redist::dump_cp(double *cpxArr, double *cpyArr)
 { // assume sufficient memory is allocated into cpxArr, cpyArr
   std::memcpy(cpxArr, cpx.returnData().data(), N * sizeof(double));
