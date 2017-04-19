@@ -11,6 +11,8 @@
 #include "redistMain.hpp"
 #include <cassert>
 
+
+/// \todo Replace empty RedistDriver class with free functions, get working with Python
 void RedistDriver::Run(int const d, int const n, int const width, int const flag)
 {
   std::vector<double> vd = Run(d, n, width, flag, false);
