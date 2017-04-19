@@ -57,7 +57,7 @@ void Heap<S,T>::addToHeap(std::pair<S,T> const &st)
   // Step 2: upheap
   idx_t pos = numelt;
   while(pos > 0)
-    if(h[pos].first < h[par(pos)].first) {
+    if(h[pos] < h[par(pos)]) {
       flip(pos,par(pos));
       pos = par(pos);
     }
@@ -83,15 +83,15 @@ bool Heap<S,T>::popFromHeap(std::pair<S,T> &st)
   idx_t pos = 0;
   while(true) {
     if(rch(pos) < numelt) {
-      if(h[lch(pos)].first <= h[rch(pos)].first) {
-	if(h[lch(pos)].first < h[pos].first) {
+      if(h[lch(pos)] <= h[rch(pos)]) {
+	if(h[lch(pos)] < h[pos]) {
 	  flip(lch(pos),pos);
 	  pos = lch(pos);
 	}
 	else
 	  return true;
       } else {
-	if(h[rch(pos)].first < h[pos].first) {
+	if(h[rch(pos)] < h[pos]) {
 	  flip(rch(pos),pos);
 	  pos = rch(pos);
 	} else
@@ -99,7 +99,7 @@ bool Heap<S,T>::popFromHeap(std::pair<S,T> &st)
       }
     } else {
       if(lch(pos) < numelt) {
-	if(h[lch(pos)].first < h[pos].first) {
+	if(h[lch(pos)] < h[pos]) {
 	  flip(lch(pos),pos);
 	  pos = lch(pos);
 	}

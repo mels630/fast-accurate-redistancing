@@ -116,18 +116,18 @@ Settings:
     width: 16
      flag: 2
 
-Calculated L2-error is 0.000262746
+Calculated L2-error is 0.000263126
 Settings:
         d: 3
         n: 32
     width: 32
      flag: 2
 
-Calculated L2-error is 3.01628e-05
+Calculated L2-error is 3.0188e-05
 Settings:
         d: 3
         n: 64
     width: 64
      flag: 2
 
-Calculated L2-error is 3.90279e-06
+Calculated L2-error is 3.90187e-06
