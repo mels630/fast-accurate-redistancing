@@ -35,28 +35,28 @@ Settings:
     width: 32
      flag: 2
 
-Calculated L2-error is 2.17457e-05
+Calculated L2-error is 2.13517e-05
 Settings:
         d: 2
         n: 64
     width: 64
      flag: 2
 
-Calculated L2-error is 3.06151e-06
+Calculated L2-error is 3.03644e-06
 Settings:
         d: 2
         n: 128
     width: 128
      flag: 2
 
-Calculated L2-error is 3.36033e-07
+Calculated L2-error is 3.33766e-07
 Settings:
         d: 2
         n: 256
     width: 256
      flag: 2
 
-Calculated L2-error is 4.65551e-08
+Calculated L2-error is 4.64522e-08
 Checking cubic convergence
 Settings:
         d: 2
@@ -64,28 +64,28 @@ Settings:
     width: 32
      flag: 3
 
-Calculated L2-error is 2.91352e-06
+Calculated L2-error is 2.87037e-06
 Settings:
         d: 2
         n: 64
     width: 64
      flag: 3
 
-Calculated L2-error is 1.79641e-07
+Calculated L2-error is 1.78361e-07
 Settings:
         d: 2
         n: 128
     width: 128
      flag: 3
 
-Calculated L2-error is 1.16349e-08
+Calculated L2-error is 1.15977e-08
 Settings:
         d: 2
         n: 256
     width: 256
      flag: 3
 
-Calculated L2-error is 7.163e-10
+Calculated L2-error is 7.14815e-10
 Three-dimensional checks
 Checking fast-marching implementation
 Settings:
@@ -101,14 +101,14 @@ Settings:
     width: 32
      flag: 1
 
-Calculated L2-error is 0.00953154
+Calculated L2-error is 0.00953146
 Settings:
         d: 3
         n: 64
     width: 64
      flag: 1
 
-Calculated L2-error is 0.00488319
+Calculated L2-error is 0.00488304
 Checking quadratic convergence
 Settings:
         d: 3
@@ -116,18 +116,18 @@ Settings:
     width: 16
      flag: 2
 
-Calculated L2-error is 0.000262204
+Calculated L2-error is 0.000262746
 Settings:
         d: 3
         n: 32
     width: 32
      flag: 2
 
-Calculated L2-error is 3.03124e-05
+Calculated L2-error is 3.01628e-05
 Settings:
         d: 3
         n: 64
     width: 64
      flag: 2
 
-Calculated L2-error is 3.85387e-06
+Calculated L2-error is 3.90279e-06
