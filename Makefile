@@ -38,7 +38,7 @@ toolbox.o: toolbox.cpp toolbox.hpp array2d.hpp defs.h
 toolbox3d.o: toolbox3d.cpp toolbox3d.hpp array3d.hpp defs.h
 	$(CC) $(CFLAGS) -c toolbox3d.cpp
 
-heap.o: heap.cpp defs.h 
+heap.o: heap.cpp heap.hpp defs.h 
 	$(CC) $(CFLAGS) -c heap.cpp
 
 idarray2d.o: idarray2d.cpp idarray2d.hpp array2d.hpp defs.h
