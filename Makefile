@@ -6,7 +6,8 @@ else
     CC = g++
 endif
 
-CFLAGS = -O2 -Wall -std=c++11 -fPIC
+CFLAGS = -O2 -Wall -std=c++11 -fPIC -D__USE_STL__
+#CFLAGS = -O2 -Wall -std=c++11 -fPIC
 #CFLAGS= -pg -O2 -DDEBUG
 
 # Entries to bring executable up to date

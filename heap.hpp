@@ -1,6 +1,3 @@
-// kill HEAPDONE
-// add bool returnu
-
 #ifndef _HEAP_HPP_
 #define _HEAP_HPP_
 
@@ -11,6 +8,33 @@
 #include <stdio.h>
 #include "defs.h"
 
+#ifdef __USE_STL__
+#include <queue>
+
+
+template<class S, class T>
+class Heap
+{
+private:
+  std::priority_queue<std::pair<S,T>, std::vector<std::pair<S,T> >, std::greater<std::pair<S,T> > > h;
+public:
+  Heap( ) = delete; // no empty constructor
+  explicit Heap(Heap const &input) = delete; // no copy constructor
+  
+  Heap(idx_t const initcapacity, idx_t const _blocksize)
+    : h()
+  { }
+  explicit Heap(idx_t const initcapacity)
+    : Heap(initcapacity, initcapacity)
+  { }
+  void addToHeap(T const &t, S const &s) { h.emplace(std::make_pair(s,t)); }
+  void addToHeap(std::pair<S,T> const &st) { h.emplace(st); }
+  //void showHeap() const;
+  bool popFromHeap(std::pair<S, T>& st) { if (h.empty()) return false; st = h.top(); h.pop(); return true; }
+  inline idx_t showCapacity() const { return h.size(); }
+  inline idx_t numberOfElements() const { return h.size(); }
+};
+#else // # __USE_STL__
 /// Heap class, sorted on S, with auxilary data stored in T
 /// Much better to use the built-in priority queue, but we retain our own implementation a sorted heap here for posterity.
 template<class S, class T>
@@ -76,4 +100,5 @@ template<class S, class T>
 inline idx_t Heap<S,T>::numberOfElements() const
 { return(numelt); }
 
-#endif
+#endif // # __USE_STL__
+#endif // # _HEAP_HPP_

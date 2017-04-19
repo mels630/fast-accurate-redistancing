@@ -20,6 +20,8 @@ public:
   Aux3& operator=(Aux3 const &a) = default; ///< Default assignment operator
   idx_t i;                                  ///< Index data
   Point3 aux;                               ///< Closest point location
+  bool operator<(Aux3 const &other) const { return i < other.i; }
+  bool operator>(Aux3 const &other) const { return other < *this; }
 };
 
 using Helt3 = std::pair<double, Aux3>;

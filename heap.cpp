@@ -2,6 +2,7 @@
 #include <cassert>
 // maintains heap sorted on S, T is auxilary data
 
+#ifndef __USE_STL__
 /// Constructor for empty heap
 /// \param[in] initcapacity : Initial capacity and blocksize
 template<class S, class T>
@@ -121,7 +122,10 @@ void Heap<S,T>::showHeap() const
 }
 */
 
+#endif // __USE_STL__
+
 #include "redist.hpp"
 #include "redist3.hpp"
 template class Heap<double, Aux>;
 template class Heap<double, Aux3>;
+
