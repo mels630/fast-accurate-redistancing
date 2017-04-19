@@ -16,7 +16,7 @@ template<class S, class T>
 class Heap
 {
 private:
-  std::priority_queue<std::pair<S,T>, std::vector<std::pair<S,T> >, std::greater<std::pair<S,T> > > h;
+  std::priority_queue<std::pair<S,T>, std::vector<std::pair<S,T> >, [](std::pair<S,T> const &st1, std::pair<S,T> const &st2)->bool { return st1.first > st2.first; } > h;
 public:
   Heap( ) = delete; // no empty constructor
   explicit Heap(Heap const &input) = delete; // no copy constructor
